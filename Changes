@@ -1,3 +1,14 @@
+2000-05-15  Dominique Dumont  <domi@ispserv.grenoble.hp.com> v1.023
+
+	* TreeGraph.pm : 
+	- added flashNode method
+	- changed computing of text size in addNode to use bbox. This way, you
+	  can use other fonts.
+	- added modifyNode
+	- fixed re-draw bug
+	- addNode accepts strings or usual arrayref.
+	- added scroll adjusting in SYNOPSIS
+
 2000-01-25  Dominique Dumont  <domi@ispserv.grenoble.hp.com> v1.016
 
 	* TreeGraph.pm: 

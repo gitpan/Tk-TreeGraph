@@ -26,8 +26,9 @@ print "ok ",$idx++,"\n";
 use strict ;
 sub draw 
   {
+    my $pok = shift ;
     $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     my $ref = [qw/some really_silly text with no tag/];
     
@@ -37,7 +38,7 @@ sub draw
        text => $ref
       ) ;
     
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     $tg -> addNode 
       (
@@ -74,7 +75,7 @@ sub draw
        text => $ref
       ) ;
     
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     
     $tg -> addNode 
@@ -105,7 +106,7 @@ sub draw
        text => $ref
       ) ;
     
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     $tg -> addNode 
       (
@@ -149,7 +150,7 @@ sub draw
        text => $ref
       ) ;
     
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     $tg -> addNode 
       (
@@ -183,11 +184,19 @@ sub draw
        from => 'martian node1'
       ) ;
     
-    print "ok ",$idx++,"\n";
+    # test out-of sync drawings
+    $tg -> addNode 
+      (
+       after => '1.5',
+       nodeId => '1.6',
+       text => $ref
+      ) ;
+    
+    print "ok ",$idx++,"\n" if $pok;
     
     $tg->addAllShortcuts() ;
     
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     $tg->arrowBind
       (
@@ -197,7 +206,7 @@ sub draw
                        warn "clicked 1 arrow $h{from} -> $h{to}\n";}
       );
     
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
     
     $tg->nodeBind
       (
@@ -221,7 +230,7 @@ sub draw
     $tg->nodeBind(button => '<3>', color => 'green', 
                   command => sub{$tg->popupMenu(@_);});
 
-    print "ok ",$idx++,"\n";
+    print "ok ",$idx++,"\n" if $pok;
 
   }
 
@@ -246,14 +255,14 @@ $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
 $tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/)
   ->pack(expand => 1, fill => 'both');
 
-&draw;
+&draw(1);
 
 $f->command(-label => 'unselect nodes',  
             -command => sub{$tg->unselectAllNodes();} );
 $f->command(-label => 'clear graph',  
             -command => sub{$tg->clear();} );
 $f->command(-label => 'draw',  
-            -command => sub{draw();} );
+            -command => sub{draw(0);} );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 
 my @array = $tg->bbox("all") ;

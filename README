@@ -27,6 +27,8 @@ Starting from version 1.016 TreeGraph no longer messes with
 -scrollregion. When a Scrolled TreeGraph is used, the -scrollregion
 will have to be modified by the user.
 
+Starting from version 1.023, you can modify a node color or text or
+make a node flash.
 
 Suggested DSLI line in the Ptk module list:
 

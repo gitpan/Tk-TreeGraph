@@ -41,7 +41,8 @@ $mw->Label(text => 'Once you have selected several rectangles (button <1>),')
 $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
-my $tg = $mw -> Scrolled(qw/TreeGraph -nodeColor red -nodeTextColor yellow/)
+my $tg = $mw -> Scrolled(qw/TreeGraph -nodeColor red -nodeTextColor yellow
+                         -nodeFill blue4/)
   ->pack(expand => 1, fill => 'both');
 
 $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');

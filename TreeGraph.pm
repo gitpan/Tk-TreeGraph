@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -24,18 +24,19 @@ sub InitObject
     my $defc = $dw->parent->cget('-foreground');
     $dw->ConfigSpecs
       (
-       -shortcutColor => ['PASSIVE', undef, undef, 'orange'],
-       -shortcutStyle => ['PASSIVE', undef, undef, 'straight'],
-       -nodeColor     => ['PASSIVE', undef, undef, $defc],
-       -arrowColor    => ['PASSIVE', undef, undef, $defc],
-       -nodeTextColor => ['PASSIVE', undef, undef, $defc],
-       -labelColor    => ['PASSIVE', undef, undef, $defc],
-       -nodeTag       => ['PASSIVE', undef, undef, 1 ], # add node Id to text
+       -shortcutColor  => ['PASSIVE', undef, undef, 'orange'],
+       -shortcutStyle  => ['PASSIVE', undef, undef, 'straight'],
+       -nodeColor      => ['PASSIVE', undef, undef, $defc],
+       -nodeFill => ['PASSIVE', undef, undef, undef ],
+       -arrowColor     => ['PASSIVE', undef, undef, $defc],
+       -nodeTextColor  => ['PASSIVE', undef, undef, $defc],
+       -labelColor     => ['PASSIVE', undef, undef, $defc],
+       -nodeTag        => ['PASSIVE', undef, undef, 1 ], # add node Id to text
        # use this to tune the shape of nodes and arrows
-       -arrowDeltaY   => ['PASSIVE', undef, undef, 40 ],
+       -arrowDeltaY    => ['PASSIVE', undef, undef, 40 ],
        -branchSeparation => ['PASSIVE', undef, undef, 120 ],
-       -x_start       => ['PASSIVE', undef, undef,  40 ],
-       -y_start       => ['PASSIVE', undef, undef, 100 ]
+       -x_start        => ['PASSIVE', undef, undef,  40 ],
+       -y_start        => ['PASSIVE', undef, undef, 100 ]
       );
 
     # bind button <1> on nodes to select a version
@@ -278,7 +279,7 @@ nodeId: string to identify this node.
 
 =item *
 
-text: text array ref. This text will be written inside the rectangle
+text: text string or array ref. This text will be written inside the rectangle
 
 =item *
 
@@ -293,6 +294,67 @@ Will add a new node (made of a rectangle with the text inside).
 
 Note that this method will add the nodeId on top of the passed text
 ('text' parameter).
+
+=head2 modifyNode(...)
+
+=over 4
+
+=item *
+
+nodeId: string to identify the node to modify (mandatory).
+
+=item *
+
+text: text string or array ref. This text will be overwritten inside
+the rectangle. Note that modifyNode will refuse to change the text if
+the new text has more lines than the older text (because the text
+would not fit in the rectangle).
+
+=item *
+
+nodeColor: new color of the outline of the rectangle.
+
+=item *
+
+nodeTextColor: new color of the text of the node.
+
+=item *
+
+nodeFill: new color filling the rectangle.
+
+=back
+
+Will modify an existing node. Note that the geometry of the node will not
+be changed.
+
+=head2 flashNode(...)
+
+=over 4
+
+=item *
+
+nodeId: string to identify the node to modify (mandatory).
+
+=item *
+
+time: time in ms between each flash (default 500 ms)
+
+=item *
+
+nodeColor: new color of the outline of the rectangle.
+
+=item *
+
+nodeTextColor: new color of the text of the node.
+
+=item *
+
+nodeFill: new color filling the rectangle.
+
+=back
+
+Will make an existing node flash. Calling a second time this method on
+a node will make the flashing stop.
 
 =head2 addDirectArrow(...)
 
@@ -554,11 +616,6 @@ pointer)
 
 Will toggle the node rectangle between 'color' and default.
 
-=head1 CAVEATS
-
-If you change the default size of the text written in the boxes, you
-will get mismatch between the size of the text and the size of the boxes.
-
 =head1 AUTHOR
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
@@ -601,7 +658,7 @@ sub clear
     my $dw = shift ;
     
     foreach (qw/arrow node nodeId tset xset shortcutFrom x y 
-             tree_start after limit/)
+             tree_start after limit column next_limit/)
       {
         delete $dw->{$_};
       }
@@ -643,7 +700,7 @@ sub checkOverlay
         $c++ ;
       }
 
-    #print "must move from column $old_c to $c)\n";
+    #print "must move from column $old_c to $c\n";
 
     my $b=$dw->{currentBranch} ;
     my $dx = $dw->cget('-branchSeparation')*($c-$old_c) ;
@@ -880,7 +937,8 @@ sub addNode
     my $dw = shift ;
     my %args = @_ ;
     my $nodeId = $args{nodeId} ;
-    my $textArrayRef = $args{text} ;
+    my $text = ref $args{text} ? join("\n",@{$args{text}}) : $args{text} ;
+    chomp $text;
 
     #print "Drawing node $nodeId\n";
     my $after = $args{after};
@@ -905,43 +963,46 @@ sub addNode
     $dw->{tree_start}=$dw->cget('-x_start') unless defined $dw->{tree_start};
     
     # compute text to draw
-    my $text = $dw->cget('-nodeTag') ? 
-      join ("\n", $nodeId, @$textArrayRef)."\n" :
-        join ("\n", @$textArrayRef)."\n"  ;
+    $text = "$nodeId\n". $text if $dw->cget('-nodeTag') ;
 
     # first compute y coord 
     my $oldy = $dw->{y} || $dw->cget('-y_start');
     my $y = $oldy + 5 ; # give some breathing space 
 
-    # compute y according to the text drawn
-    $y += 14 if $dw->cget('-nodeTag') ; # add room for the node tag
-    $y += 14 * scalar(@$textArrayRef) + 10 ;
-
-    # check if we're not drawing over something
-    $dw->checkOverlay($y);
-
-    # then I can compute the x coordinate
+    # then compute the x coordinate
     my $branch_dx= $dw->cget('-branchSeparation');
     my $c = $dw->{column}{$dw->{currentBranch}} ;
     my $x = $branch_dx * $c + $dw->{tree_start}  ;
 
     # compute y coord
     # draw node text
-    my $defc = $dw->cget('-nodeTextColor');
+    my $defc = $args{nodeTextColor} || $args{-nodeTextColor} 
+      || $dw->cget('-nodeTextColor');
 
     my $tid = $dw->create('text', $x + $branch_dx/2 - 10, $oldy + 5, 
-                          -text=>$text,  -fill => $defc,
+                          -text => $text,  -fill => $defc,
                           qw/-justify center -anchor n -width 12c/,
                           -tags => ['node', $dw->{currentBranch}]) ;
 
+    # compute y according to the text drawn
+    my @box = $dw->bbox($tid) ;
+    $y = $box[3] + 5 ;
+
     # draw node rectangle
-    $defc = $dw->cget('-nodeColor');
+    $defc = $args{nodeColor} || $args{-nodeColor} || $dw->cget('-nodeColor');
+    my $bgc = $args{nodeFill} || $args{-nodeFill} 
+      || $dw->cget('-nodeFill');
     my $rid = $dw->create('rectangle',
                           $x , $oldy,
                           $x + $branch_dx   - 20 , $y,
-                          -outline => $defc, -width => 2 , 
+                          -outline => $defc, -width => 2 , -fill => $bgc ,
                           -tags => ['node', $dw->{currentBranch}]
                         ) ;
+    
+    $dw->raise($tid,$rid); # the text is hidden below if forgotten
+
+    # check if we have not drawn over something
+    $dw->checkOverlay($y);
 
     $dw -> {nodeId}{$tid}=$nodeId ; 
     $dw -> {nodeId}{$rid}=$nodeId ; # also stored
@@ -951,6 +1012,111 @@ sub addNode
 
     $dw->{x} = $x;
     $dw->{y} = $y ;
+  }
+
+sub modifyNode
+  {
+    my $dw = shift ;
+    my %args = @_ ;
+
+    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    croak "modifyNode: missing nodeId parameter" 
+      unless defined $args{nodeId};
+
+    my $rid = $dw->{node}{rectangle}{$nodeId} ; # retrieve id of rectangle
+    my $tid = $dw->{node}{text}{$nodeId} ; 
+
+    croak "modifyNode: unknown nodeId : $nodeId" unless defined $rid ;
+
+    if (defined $args{nodeColor})
+      {
+        $dw->itemconfigure($rid, -outline => $args{nodeColor}) ;
+      }
+    
+    if (defined $args{text})
+      {
+        my $text = ref $args{text} ? join("\n",$args{text}) : $args{text};
+        chomp $text ;
+
+        $text = $nodeId."\n$text" if $dw->cget('-nodeTag') ;
+        my $count = $text ;
+        $count =~ s/[^\n]// ;
+        
+        my $oldText = $dw->itemcget($tid, '-text' ) ;
+        $oldText =~ s/[^\n]// ;
+        
+        if (length($count) > length($oldText))
+          {
+            croak "modifyNode error: New text is longer than the old one. It will no fit in the node" ;
+          }
+        
+        $dw->itemconfigure($tid, -text => $text) ;
+      }
+    
+    if (defined $args{nodeTextColor})
+      {
+        $dw->itemconfigure($tid, -fill => $args{nodeTextColor}) ;
+      }
+    
+    if (defined $args{nodeFill})
+      {
+        $dw->itemconfigure($rid, -fill => $args{nodeFill}) ;
+      }
+    
+  }
+
+sub flashNode
+  {
+    my $dw = shift ;
+    my %args = @_ ;
+
+    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    croak "modifyNode: missing nodeId parameter" 
+      unless defined $args{nodeId};
+
+    my $rid = $dw->{node}{rectangle}{$nodeId} ; # retrieve id of rectangle
+    my $tid = $dw->{node}{text}{$nodeId} ; 
+
+    croak "modifyNode: unknown nodeId : $nodeId" unless defined $rid ;
+
+    if (defined $dw -> {node}{flash} and 
+        defined $dw -> {node}{flash}{$nodeId} and 
+        $dw -> {node}{flash}{$nodeId})
+      {
+        $dw -> {node}{flash}{$nodeId} = 0;
+        return ;
+      }
+    
+    my $time = $args{time} || 500 ;
+    $dw -> {node}{flash}{$nodeId} = 1 ;
+
+    my $oldNodeColor = $dw->itemcget($rid, '-outline') ;
+    my $oldNodeTextColor = $dw->itemcget($tid, '-fill') ;
+    my $oldNodeFill = $dw->itemcget($rid, '-fill') ;
+
+    my $newNodeColor = $args{nodeColor} || $oldNodeColor ;
+    my $newNodeTextColor = $args{nodeTextColor} || $oldNodeTextColor ;
+    my $newNodeFill = $args{nodeFill} || $oldNodeFill ;
+
+    my ($on,$off) ;
+
+    $on = sub 
+      {
+        $dw->itemconfigure($rid, -outline => $newNodeColor) ;
+        $dw->itemconfigure($tid, -fill =>    $newNodeTextColor) ;
+        $dw->itemconfigure($rid, -fill =>    $newNodeFill) ;
+        $dw->after($time,$off) ; # always call off
+      };
+
+    $off = sub 
+      {
+        $dw->itemconfigure($rid, -outline => $oldNodeColor) ;
+        $dw->itemconfigure($tid, -fill =>    $oldNodeTextColor) ;
+        $dw->itemconfigure($rid, -fill =>    $oldNodeFill) ;
+        $dw->after($time,$on) if $dw -> {node}{flash}{$nodeId} ;
+      };
+
+    &$on ;
   }
 
 # will return with node Id

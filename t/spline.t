@@ -60,7 +60,7 @@ $tg->addNode( after =>'1.1B',  nodeId => '2.1B',  text => ['some','text'] );
 $tg->addNode( after =>'2.1B',  nodeId => '3.1B',  text => ['some','text'] );
 
 $tg->addNode( after =>'1.1B',  nodeId => '1.1C',  text => ['some','text'] );
-$tg->addNode( after =>'1.1C',  nodeId => '2.1C',  text => ['some','text'] );
+$tg->addNode( after =>'1.1C',  nodeId => '2.1C',  text => "some\nstring\ntext" );
 
 $tg->addShortcutInfo( from =>'1.0',  to => '2.1A' );
 $tg->addShortcutInfo( from =>'1.0',  to => '3.1B' );
