@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -31,7 +31,9 @@ sub InitObject
        -labelColor    => ['PASSIVE', undef, undef, $defc],
        # use this to tune the shape of nodes and arrows
        -arrowDeltaY   => ['PASSIVE', undef, undef, 40 ],
-       -branchSeparation => ['PASSIVE', undef, undef, 120 ]
+       -branchSeparation => ['PASSIVE', undef, undef, 120 ],
+       -x_start       => ['PASSIVE', undef, undef, 100 ],
+       -y_start       => ['PASSIVE', undef, undef, 100 ]
       );
 
     # bind button <1> on nodes to select a version
@@ -39,7 +41,6 @@ sub InitObject
                '<1>' => sub {$dw->toggleNode(color => 'blue')});
 
     $dw->SUPER::InitObject($args) ;
-
 
   }
 
@@ -67,24 +68,18 @@ Tk::TreeGraph - Tk widget to draw a tree in a Canvas
 
  $tg -> addLabel (text => 'some tree');
 
- my $ref = [1000..1005];
- my ($ox,$oy) = (100,100);
+ my $ref = [qw/some really_silly text/];
 
  $tg -> addNode 
   (
    nodeId => '1.0', 
-   text => $ref, 
-   xref => \$ox, 
-   yref => \$oy
+   text => $ref
   ) ;
 
- my ($x,$y)= ($ox,$oy) ;
  $tg -> addDirectArrow
   (
    from => '1.0', 
-   to => '1.1',
-   xref => \$x,
-   yref => \$y
+   to => '1.1'
   ) ;
 
  $tg->arrowBind
@@ -170,6 +165,9 @@ the crude algorithm used here works quite fine with drawing id trees
 for VCS system. But as usual, I'm always listening for suggestions or
 even better, patches ;-) .
 
+Note that the tree MUST be drawn from top to bottom and from left to
+right. Unless you may get a very confusing drawing of a tree.
+
 =head1 Widget Options
 
 =over 4
@@ -202,21 +200,23 @@ even better, patches ;-) .
 
 -branchSeparation: minimum width between 2 branches of the tree (default 120) 
 
+=item *
+
+-x_start: x coordinate of the root of the tree. (default 100)
+
+=item *
+
+-y_start: y coordinate of the root of the tree.(default 100)
+
 =back
 
 =cut
 
-#'
-
 =head1 Drawing Methods added to Canvas
 
-In each drawing methods, passing a reference (here x_ref, y_ref and 
-delta_x_ref) means that the value refered to will be modified by the
-method.
+All id parameters as treated as string.
 
-Note that all id parameters as treated as string.
-
-=head2 addDirectArrow()
+=head2 addDirectArrow(...)
 
 =over 4
 
@@ -228,22 +228,13 @@ from: node id where the arrow starts
 
 to: node id where the arrow ends
 
-=item *
-
-xref: \$x
-
-=item *
-
-yref: \$y
-
 =back
 
-Add a new straight (i.e. vertical) arrow starting from coordinate (x,y).
+Add a new straight (i.e. vertical) arrow starting from a node. Note that
+the 'from' nodeId must be defined. The 'to' nodeId must NOT be defined.
+(Remember that you must draw the tree from top to bottom)
 
-x and y are modified so that their new value is the coordinate of the tip
-of the arrow.
-
-=head2 addSlantedArrow()
+=head2 addSlantedArrow(...)
 
 Parameters are:
 
@@ -257,32 +248,14 @@ from: node id where the arrow starts
 
 to: node id where the arrow ends
 
-=item *
-
-xref: x_ref
-
-
-=item *
-
-yref: y_ref
-
-=item *
-
-deltaXref: \$dx
-
 =back
 
 Add a new branch connecting node 'id' to node 'id2'.
+Note that
+the 'from' nodeId must be defined. The 'to' nodeId must NOT be defined.
+(Remember that you must draw the tree from left to right)
 
-The arrow will be drawn from (x,y) to (x+delta_x, y).
-
-x and y are modified so that their new value is the coordinate of the tip
-of the arrow.
-
-delta_x is modified so that the next branch drawn from node 'id1' 
-using this delta_x variable will not overlap the first branch.
-
-=head2 addLabel()
+=head2 addLabel(...)
 
 Put some text on the top of the graph.
 
@@ -294,7 +267,7 @@ text: text to be inserted on the top of the graph.
 
 =back
 
-=head2 addShortcutInfo()
+=head2 addShortcutInfo(...)
 
 =over 4
 
@@ -319,7 +292,7 @@ are drawn and all relevant calls to addShortcutInfo are done.
 It will draw shortcut arrows between the ids declared with 
 the addShortcutInfo method.
 
-=head2 addNode()
+=head2 addNode(...)
 
 =over 4
 
@@ -356,7 +329,7 @@ Clear the graph.
 
 =head1 Management methods
 
-=head2 nodeBind()
+=head2 nodeBind(...)
 
 =over 4
 
@@ -380,7 +353,7 @@ with these parameters:
 
  (on => 'node', nodeId => $nodeId)
 
-=head2 arrowBind()
+=head2 arrowBind(...)
 
 =over 4
 
@@ -415,7 +388,7 @@ Unselect all previously selected nodes (see button <1> binding)
 
 Return an array containing nodeIds of all nodes currently selected.
 
-=head2 command()
+=head2 command(...)
 
 This will add a new entry on a Popup menu which can be raised on a node
 or an arrow.
@@ -458,7 +431,7 @@ set for B<arrows> :
 These functions are documented only for people wanting to improve or
 inherit this widget.
 
-=head2 setArrow()
+=head2 setArrow(...)
 
 =over 4
 
@@ -495,7 +468,7 @@ When a node is set, only the text is highlighted
 Returns the nodeId of the current node (i.e. the node clicked by the user
 if this function was used in a bind)
 
-=head2 toggleNode()
+=head2 toggleNode(...)
 
 =over 4
 
@@ -585,21 +558,29 @@ sub addDirectArrow
     my %args = @_ ;
     my $nodeId = $args{from} ;
     my $lowerNodeId =  $args{to} ;
-    my $xr = $args{xref} ;
-    my $yr = $args{yref} ;
 
-    my $old_y = $$yr;
+    my $x = $dw->{x} ;
+    my $y = $dw->{y};
+
+    $dw->BackTrace("AddSlantedArrow: unknown nodeId: $nodeId\n")
+      unless defined $dw->{node}{bottom}{$nodeId};
+
+    my $old_x = $x = $dw->{node}{bottom}{$nodeId}[0];
+    my $old_y = $y = $dw->{node}{bottom}{$nodeId}[1];
+
     my $arrow_dy = $dw->cget('-arrowDeltaY');
-    $$yr = $old_y + $arrow_dy ; # give length of arrow
+    $y = $old_y + $arrow_dy ; # give length of arrow
 
     my $defc = $dw->cget('-arrowColor'); 
-    my $itemId = $dw->create('line', $$xr, $old_y, $$xr, $$yr , 
+    my $itemId = $dw->create('line', $x, $old_y, $x, $y , 
                              fill => $defc,
                              qw(-arrow last -tags arrow)); 
 
     $dw->{arrow}{start}{$itemId} = $nodeId ; 
     $dw->{arrow}{tip}{$itemId} = $lowerNodeId ; 
 
+    $dw->{x} = $x;
+    $dw->{y} = $y ;
   }
 
  # will call-back sub with ($start_nodeId,$tip_nodeId) nodeId 
@@ -666,30 +647,36 @@ sub addSlantedArrow
     my %args = @_ ;
     my $nodeId = $args{from} ;
     my $branch =  $args{to} ;
-    my $xr = $args{xref} ;
-    my $yr = $args{yref} ;
-    my $dxr = $args{deltaXref} ; # must be undef or null for first branch
+    my $x = $dw->{x};
+    my $y = $dw->{y} ;
+
+    my $sx = $dw->{slanted_x} || $dw->cget('-x_start');
 
     my $branch_dx= $dw->cget('-branchSeparation');
 
-    $$dxr = 0 unless defined $dxr ;
-    $$dxr += $branch_dx  ;
+    $sx += $branch_dx  ;
 
-    my $old_x = $$xr ;
-    my $old_y = $$yr ;
+    $dw->BackTrace("AddSlantedArrow: unknown nodeId: $nodeId\n")
+      unless defined $dw->{node}{bottom}{$nodeId};
+
+    my $old_x = $x = $dw->{node}{bottom}{$nodeId}[0];
+    my $old_y = $y = $dw->{node}{bottom}{$nodeId}[1];
 
     my $arrow_dy = $dw->cget('-arrowDeltaY');
-    $$yr += $arrow_dy ; # give length of arrow
-    $$xr += $$dxr ;
+    $y += $arrow_dy ; # give length of arrow
+    $x = $sx ;
 
     my $defc = $dw->cget('-arrowColor');
     my $itemId = $dw->create('line', $old_x, $old_y, 
-                         $$xr, $$yr,   fill => $defc,
-                         qw(arrow last tags arrow));
-
+                             $x, $y,   fill => $defc,
+                             qw(arrow last tags arrow));
 
     $dw->{arrow}{start}{$itemId} = $nodeId ;
     $dw->{arrow}{tip}{$itemId} = $branch ;
+
+    $dw->{x} = $x;
+    $dw->{y} = $y ;
+    $dw->{slanted_x} = $sx;
   }
 
 ## Short Cut Arrows 
@@ -732,16 +719,17 @@ sub addNode
     my %args = @_ ;
     my $nodeId = $args{nodeId} ;
     my $textArrayRef = $args{text} ;
-    my $xr = $args{xref} ;
-    my $yr = $args{yref} ;
+
+    my $x = $dw->{x} || $dw->cget('-x_start');
+    my $y = $dw->{y} || $dw->cget('-y_start');
 
     # compute x coord 
     # find lower node and call addNode
 
-    $dw->{node}{top}{$nodeId} = [ $$xr, $$yr] ; # top of node text
-    my $oldy = $$yr ;
+    $dw->{node}{top}{$nodeId} = [ $x, $y] ; # top of node text
 
-    $$yr += 5 ; # give some breathing space 
+    my $oldy = $y ;
+    $y += 5 ; # give some breathing space 
 
     my $text = join ("\n", $nodeId, @$textArrayRef)."\n";
 
@@ -749,17 +737,17 @@ sub addNode
     # draw node
     my $defc = $dw->cget('-nodeTextColor');
 
-    my $tid = $dw->create('text', $$xr, $$yr, text=>$text,  fill => $defc,
+    my $tid = $dw->create('text', $x, $y, text=>$text,  fill => $defc,
                           qw/justify center anchor n width 12c tags node/) ;
 
-    $$yr += 14 * (1+ scalar(@$textArrayRef)) + 10 ;
+    $y += 14 * (1+ scalar(@$textArrayRef)) + 10 ;
 
     my $branch_dx= $dw->cget('-branchSeparation');
 
     $defc = $dw->cget('-nodeColor');
     my $rid = $dw->create('rectangle',
-                          $$xr - $branch_dx/2 + 10 , $oldy,
-                          $$xr + $branch_dx/2 - 10 , $$yr,
+                          $x - $branch_dx/2 + 10 , $oldy,
+                          $x + $branch_dx/2 - 10 , $y,
                           -outline => $defc, width => 2 , tags => 'node'
                         ) ;
 
@@ -768,13 +756,13 @@ sub addNode
     $dw -> {node}{text}{$nodeId}=$tid ;
     $dw -> {node}{rectangle}{$nodeId}=$rid ;
 
-    $dw->{node}{bottom}{$nodeId} = [ $$xr, $$yr] ; # bottom of node text
+    $dw->{node}{bottom}{$nodeId} = [ $x, $y] ; # bottom of node text
 
     # must initialize myself the scrollregion for the first time
     my $array = $dw->cget('scrollregion') || [0,0, 200, 200];
 
-    my $incx = $array->[2] < $$xr ? 200 : 0 ;
-    my $incy = $array->[3] < $$yr ? 200 : 0 ;
+    my $incx = $array->[2] < $x ? 200 : 0 ;
+    my $incy = $array->[3] < $y ? 200 : 0 ;
 
     if ($incx>0 or $incy>0)
       {
@@ -782,6 +770,9 @@ sub addNode
         my $newy = $array->[3] + $incy ;
         $dw->configure(scrollregion => [0,0, $newx , $newy ])
       }
+
+    $dw->{x} = $x;
+    $dw->{y} = $y ;
   }
 
 # will return with node Id
