@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -25,6 +25,7 @@ sub InitObject
     $dw->ConfigSpecs
       (
        -shortcutColor => ['PASSIVE', undef, undef, 'orange'],
+       -shortcutStyle => ['PASSIVE', undef, undef, 'straight'],
        -nodeColor     => ['PASSIVE', undef, undef, $defc],
        -arrowColor    => ['PASSIVE', undef, undef, $defc],
        -nodeTextColor => ['PASSIVE', undef, undef, $defc],
@@ -210,6 +211,11 @@ right. Unless you may get a very confusing drawing of a tree.
 =item *
 
 -shortcutColor: Color of the shortcut arrow (default 'orange')
+
+=item *
+
+-shortcutStyle: Style of the shortcut arrow. The arrow can be drawn as 
+a 'straight' arrow or a 'spline'. (default 'straight')
 
 =item *
 
@@ -801,7 +807,7 @@ sub addShortcutInfo
     my $nodeId = $args{from} ;
     my $mNodeId = $args{to} ;
 
-    $dw->{shortcutFrom}{$nodeId} = $mNodeId ;
+    push( @{$dw->{shortcutFrom}{$nodeId}}, $mNodeId );
   }
 
 sub addAllShortcuts
@@ -811,27 +817,38 @@ sub addAllShortcuts
     my $color = $dw->cget('-shortcutColor') || $dw->cget('-foreground');
 
     my $dx= $dw->cget('-branchSeparation')/2 - 10;
-
+    my $branch_dx= $dw->cget('-branchSeparation');
+    my $style = $dw->cget('-shortcutStyle') ;
+    
     foreach my $nodeId (keys %{$dw->{shortcutFrom}})
       {
-        my $mNodeId = $dw->{shortcutFrom}{$nodeId} ;
-
-        next unless defined $dw->{node}{rectangle}{$mNodeId} ;
         next unless defined $dw->{node}{rectangle}{$nodeId} ;
-        # beginning of arrow
-        my ($bx, $by) = ($dw->coords($dw->{node}{rectangle}{$nodeId}))[0,3] ;
-        # end of arrow
-        my ($ex, $ey) =($dw->coords($dw->{node}{rectangle}{$mNodeId}))[0,1] ;
-        my $itemId = $dw->create
-          (
-           'line', 
-           $bx + $dx, $by, 
-           $ex + $dx, $ey,  
-           'arrow' => 'last', 'tag' => 'scutarrow','fill'=>$color
-          );
-
-        $dw->{arrow}{start}{$itemId} = $mNodeId ;
-        $dw->{arrow}{tip}{$itemId} = $nodeId ;
+	
+        foreach my $mNodeId (@{$dw->{shortcutFrom}{$nodeId}})
+          {
+            next unless defined $dw->{node}{rectangle}{$mNodeId} ;
+            # beginning of arrow
+            my ($bx, $by) = ($dw->coords($dw->{node}{rectangle}{$nodeId}))[0,3] ;
+            # end of arrow
+            my ($ex, $ey) =($dw->coords($dw->{node}{rectangle}{$mNodeId}))[0,1] ;
+            my @opt = ($bx + $dx, $by); # arrow start
+            
+            # intermediate points for multi-segment line
+            push @opt, ($bx+ $dx + $ex +$dx - $branch_dx)/2, ($by+$ey)/2 
+              if $style eq 'spline' ;
+            
+            push @opt , $ex + $dx, $ey ; # arrow end
+            
+            push @opt ,qw/-smooth on/ if $style eq 'spline'; # spline mode 
+ 
+            my $itemId = $dw->create
+              (
+               'line', @opt ,
+               'arrow' => 'last', 'tag' => 'scutarrow','fill'=>$color
+              );
+            $dw->{arrow}{start}{$itemId} = $mNodeId ;
+            $dw->{arrow}{tip}{$itemId} = $nodeId ;
+	  }
       }
   }
 

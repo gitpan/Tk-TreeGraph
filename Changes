@@ -1,3 +1,9 @@
+1999-08-12  Dominique Dumont  <domi@barrayar.grenoble.hp.com> v1.015
+
+	* TreeGraph.pm (addAllShortcuts): 
+	- splined shortcut arrow
+	- bug fix: can now have more than one shortcut starting from a node
+
 1999-07-23  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* TreeGraph.pm :
