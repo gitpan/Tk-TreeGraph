@@ -1,3 +1,8 @@
+1999-02-12  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* TreeGraph.pm (addNode): Added 'after' parameters so addNode can
+	draw itself the arrows.
+
 1999-02-11  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* TreeGraph.pm (addNode): coordinate are now handled by the 

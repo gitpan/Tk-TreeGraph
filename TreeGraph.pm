@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -76,11 +76,27 @@ Tk::TreeGraph - Tk widget to draw a tree in a Canvas
    text => $ref
   ) ;
 
+ # EITHER add the arrow and the node
  $tg -> addDirectArrow
   (
    from => '1.0', 
    to => '1.1'
   ) ;
+
+ $tg->addNode
+  (
+   nodeId => '1.1',
+   text => ['some','text']
+  ) ;
+
+ # OR add a node after another one, in this case the widget 
+ # will draw the arrow
+ $tg->addNode
+  (
+   after =>'1.0',
+   nodeId => '1.1',
+   text => ['some','text']
+  );
 
  $tg->arrowBind
   (
@@ -214,9 +230,42 @@ right. Unless you may get a very confusing drawing of a tree.
 
 =head1 Drawing Methods added to Canvas
 
-All id parameters as treated as string.
+You draw the tree node after node with addNode using the 'after' 
+parameter. Then the object will infer the kind of arrow needed between the
+2 nodes. Using the 'after' parameter, you no longer need
+to call youself the addSlantedArrow or addDirectArrow methods.
+
+=head2 addNode(...)
+
+=over 4
+
+=item *
+
+nodeId: string to identify this node.
+
+=item *
+
+text: text array ref. This text will be written inside the rectangle
+
+=item *
+
+after: Either a [x,y] array ref setting the coordinate of the root
+of the tree (this can be used to draw the a first tree in the canvas and/or
+to draw a second tree in the canvas). If after is a nodeId, an arrow
+(direct or slanted) will be drawn from the 'after' node to this new node.
+
+=back
+
+Will add a new node (made of a rectangle with the text inside). 
+
+Note that this method will add the nodeId on top of the passed text
+('text' parameter).
 
 =head2 addDirectArrow(...)
+
+You can use this method if you want to change the default aspect of
+the direct arrow. In this case do not use the 'after' parameter of the
+addNode() method.
 
 =over 4
 
@@ -236,6 +285,10 @@ the 'from' nodeId must be defined. The 'to' nodeId must NOT be defined.
 
 =head2 addSlantedArrow(...)
 
+You can use this method if you want to change the default aspect of
+the slanted arrow. In this case do not use the 'after' parameter of the
+addNode() method.
+
 Parameters are:
 
 =over 4
@@ -250,9 +303,8 @@ to: node id where the arrow ends
 
 =back
 
-Add a new branch connecting node 'id' to node 'id2'.
-Note that
-the 'from' nodeId must be defined. The 'to' nodeId must NOT be defined.
+Add a new branch connecting node 'id' to node 'id2'.  Note that the
+'from' nodeId must be defined. The 'to' nodeId must NOT be defined.
 (Remember that you must draw the tree from left to right)
 
 =head2 addLabel(...)
@@ -291,37 +343,6 @@ are drawn and all relevant calls to addShortcutInfo are done.
  
 It will draw shortcut arrows between the ids declared with 
 the addShortcutInfo method.
-
-=head2 addNode(...)
-
-=over 4
-
-=item *
-
-nodeId: id
-
-=item *
-
-text: text array ref. This text will be written inside the rectangle
-
-=item *
-
-xref: \$x
-
-
-=item *
-
-yref: \$y)
-
-=back
-
-Will add a new node (made of a rectangle with the text inside). The node
-will be drawn at coordinate (x,y)
-
-x and y are modified so that their new value is the coordinate of the tip
-of the arrow.
-
-Note that this method will add the nodeId on top of the text.
 
 =head2 clear()
 
@@ -559,10 +580,11 @@ sub addDirectArrow
     my $nodeId = $args{from} ;
     my $lowerNodeId =  $args{to} ;
 
+    $dw->{after}{$nodeId}=1;
     my $x = $dw->{x} ;
     my $y = $dw->{y};
 
-    $dw->BackTrace("AddSlantedArrow: unknown nodeId: $nodeId\n")
+    $dw->BackTrace("AddSlantedArrow: unknown 'from' nodeId: $nodeId\n")
       unless defined $dw->{node}{bottom}{$nodeId};
 
     my $old_x = $x = $dw->{node}{bottom}{$nodeId}[0];
@@ -656,7 +678,7 @@ sub addSlantedArrow
 
     $sx += $branch_dx  ;
 
-    $dw->BackTrace("AddSlantedArrow: unknown nodeId: $nodeId\n")
+    $dw->BackTrace("AddSlantedArrow: unknown 'from' nodeId: $nodeId\n")
       unless defined $dw->{node}{bottom}{$nodeId};
 
     my $old_x = $x = $dw->{node}{bottom}{$nodeId}[0];
@@ -687,6 +709,13 @@ sub addShortcutInfo
     my %args = @_ ;
     my $nodeId = $args{from} ;
     my $mNodeId = $args{to} ;
+
+    $dw->BackTrace("addShortcutInfo: unknown 'from' nodeId: $nodeId\n")
+      unless defined $dw->{node}{bottom}{$nodeId};
+
+    $dw->BackTrace("addShortcutInfo: unknown 'to' nodeId: $mNodeId\n")
+      unless defined $dw->{node}{top}{$mNodeId};
+
     $dw->{shortcutFrom}{$nodeId} = $mNodeId ;
   }
 
@@ -719,6 +748,25 @@ sub addNode
     my %args = @_ ;
     my $nodeId = $args{nodeId} ;
     my $textArrayRef = $args{text} ;
+
+    my $after = $args{after};
+    if (defined $after)
+      {
+        if (ref($after) eq 'ARRAY')
+          {
+            # re-start another tree
+            ($dw->{x},$dw->{y}) = @$after;
+            $dw->{slanted_x} = $dw->{x};
+          }
+        elsif (defined $dw->{after}{$after})
+          {
+            $dw->addSlantedArrow('from' => $after, to => $nodeId);
+          }
+        else
+          {
+            $dw->addDirectArrow('from' => $after, to => $nodeId);
+          }
+      }
 
     my $x = $dw->{x} || $dw->cget('-x_start');
     my $y = $dw->{y} || $dw->cget('-y_start');
@@ -760,16 +808,21 @@ sub addNode
 
     # must initialize myself the scrollregion for the first time
     my $array = $dw->cget('scrollregion') || [0,0, 200, 200];
+    my $mod = 0;
 
-    my $incx = $array->[2] < $x ? 200 : 0 ;
-    my $incy = $array->[3] < $y ? 200 : 0 ;
-
-    if ($incx>0 or $incy>0)
+    if ($array->[2] < $x + $branch_dx)
       {
-        my $newx = $array->[2] + $incx ;
-        my $newy = $array->[3] + $incy ;
-        $dw->configure(scrollregion => [0,0, $newx , $newy ])
+        $array->[2] = $x + $branch_dx ;
+        $mod = 1;
       }
+
+    if ($array->[3] < $y)
+      {
+        $array->[3] = $y + 50 ; # some margin
+        $mod = 1;
+      }
+
+    $dw->configure(scrollregion => $array) if $mod ;
 
     $dw->{x} = $x;
     $dw->{y} = $y ;

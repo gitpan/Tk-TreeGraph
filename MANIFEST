@@ -5,3 +5,4 @@ README
 Makefile.PL
 t/tree.t
 t/no_coord.t
+t/only_node.t
