@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -29,6 +29,7 @@ sub InitObject
        -arrowColor    => ['PASSIVE', undef, undef, $defc],
        -nodeTextColor => ['PASSIVE', undef, undef, $defc],
        -labelColor    => ['PASSIVE', undef, undef, $defc],
+       -nodeTag       => ['PASSIVE', undef, undef, 1 ], # add node Id to text
        # use this to tune the shape of nodes and arrows
        -arrowDeltaY   => ['PASSIVE', undef, undef, 40 ],
        -branchSeparation => ['PASSIVE', undef, undef, 120 ],
@@ -207,6 +208,11 @@ right. Unless you may get a very confusing drawing of a tree.
 =item *
 
 -shortcutColor: Color of the shortcut arrow (default 'orange')
+
+=item *
+
+-nodeTag: boolean. By default the nodeId is added at the beginning of
+the node text.
 
 =item *
 
@@ -409,6 +415,21 @@ Unselect all previously selected nodes (see button <1> binding)
 
 Return an array containing nodeIds of all nodes currently selected.
 
+=head2 getNodeRectangle(...)
+
+Returns the rectangle reference of the passed nodeId or of the 
+node selected by the user.
+
+Parameters are :
+
+=over 4
+
+=item *
+
+nodeId: nodeId attached to the rectangle
+
+=back 
+
 =head2 command(...)
 
 This will add a new entry on a Popup menu which can be raised on a node
@@ -506,6 +527,11 @@ pointer)
 
 Will toggle the node rectangle between 'color' and default.
 
+=head1 CAVEATS
+
+If you change the default size of the text written in the boxes, you
+will get mismatch between the size of the text and the size of the boxes.
+
 =head1 AUTHOR
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
@@ -549,13 +575,15 @@ sub clear
   {
     my $dw = shift ;
     
-    foreach (qw/arrow node nodeId tset xset shortcutFrom/)
+    foreach (qw/arrow node nodeId tset xset shortcutFrom x y slanted_x/)
       {
         delete $dw->{$_};
       }
 
-    $dw-> clear() ;
-    $dw->configure(scrollregion => [0,0, 1000 , 400 ])
+    $dw->delete('all');
+
+    $dw->configure(scrollregion => [0,0, 200 , 200 ])
+
   }
 
 sub addLabel
@@ -710,12 +738,6 @@ sub addShortcutInfo
     my $nodeId = $args{from} ;
     my $mNodeId = $args{to} ;
 
-    $dw->BackTrace("addShortcutInfo: unknown 'from' nodeId: $nodeId\n")
-      unless defined $dw->{node}{bottom}{$nodeId};
-
-    $dw->BackTrace("addShortcutInfo: unknown 'to' nodeId: $mNodeId\n")
-      unless defined $dw->{node}{top}{$mNodeId};
-
     $dw->{shortcutFrom}{$nodeId} = $mNodeId ;
   }
 
@@ -729,6 +751,7 @@ sub addAllShortcuts
       {
         my $mNodeId = $dw->{shortcutFrom}{$nodeId} ;
         next unless defined $dw->{node}{bottom}{$mNodeId} ;
+        next unless defined $dw->{node}{bottom}{$nodeId} ;
         my ($bx, $by) = @{$dw->{node}{bottom}{$nodeId}} ; # beginning of arrow
         my ($ex, $ey) = @{$dw->{node}{top}{$mNodeId}} ; # end of arrow
         my $itemId = $dw->create('line', $bx, $by, $ex, $ey,  
@@ -779,7 +802,9 @@ sub addNode
     my $oldy = $y ;
     $y += 5 ; # give some breathing space 
 
-    my $text = join ("\n", $nodeId, @$textArrayRef)."\n";
+    my $text = $dw->cget('-nodeTag') ? 
+      join ("\n", $nodeId, @$textArrayRef)."\n" :
+        join ("\n", @$textArrayRef)."\n"  ;
 
     # compute y coord
     # draw node
@@ -788,7 +813,8 @@ sub addNode
     my $tid = $dw->create('text', $x, $y, text=>$text,  fill => $defc,
                           qw/justify center anchor n width 12c tags node/) ;
 
-    $y += 14 * (1+ scalar(@$textArrayRef)) + 10 ;
+    $y += 14 if $dw->cget('-nodeTag') ; # add room for the node tag
+    $y += 14 * scalar(@$textArrayRef) + 10 ;
 
     my $branch_dx= $dw->cget('-branchSeparation');
 
@@ -841,7 +867,7 @@ sub toggleNode
 
     if (defined $dw->{tset}{node}{$nodeId})
       {
-        my $defc = $dw->cget('-foreground');
+        my $defc = $dw->cget('-nodeColor');
         $dw->itemconfigure($rid, outline => $defc) ; #unselect
         delete $dw->{tset}{node}{$nodeId} ;
       } 
@@ -857,6 +883,14 @@ sub toggleNode
     return $nodeId ;
   }
 
+sub getNodeRectangle
+  {
+    my $dw = shift ;
+    my %args = @_ ;
+    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    return $dw->{node}{rectangle}{$nodeId} ;
+  }
+
 sub getSelectedNodes
   {
     my $dw = shift ;
@@ -867,7 +901,7 @@ sub unselectAllNodes
   {
     my $dw = shift ;
 
-    my $defc = $dw->cget('-foreground');
+    my $defc = $dw->cget('-nodeColor');
     foreach (values %{$dw->{tset}{node}})
       {
         $dw->itemconfigure($_, outline => $defc) ; #unselect
@@ -907,7 +941,7 @@ sub setNode
 
     if (defined $dw->{xset}{node})
       {
-        my $defc = $dw->cget('-nodeTextColor') || $dw->cget('-foreground');
+        my $defc = $dw->cget('-nodeTextColor') || $dw->cget('-nodeColor');
         $dw->itemconfigure($dw->{xset}{node},fill => $defc);
       }
 
