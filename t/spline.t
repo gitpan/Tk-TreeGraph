@@ -91,6 +91,9 @@ $tg->nodeBind( button => '<3>', color => 'green',
   command => sub{$tg->popupMenu(@_);}   );
 print "ok ",$idx++,"\n";
 
+my @array = $tg->bbox("all") ;
+$tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
 MainLoop ; # Tk's
 
 print "ok ",$idx++,"\n";

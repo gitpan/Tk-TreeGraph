@@ -226,6 +226,9 @@ $f->command(-label => 'unselect nodes',
             -command => sub{$tg->unselectAllNodes();} );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 
+my @array = $tg->bbox("all") ;
+$tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
 MainLoop ; # Tk's
 
 print "ok ",$idx++,"\n";

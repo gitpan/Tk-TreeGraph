@@ -41,7 +41,7 @@ $mw->Label(text => 'Once you have selected several rectangles (button <1>),')
 $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
-my $tg = $mw -> Scrolled('TreeGraph')->pack(expand => 1, fill => 'both');
+my $tg = $mw -> Scrolled('TreeGraph')->pack(expand => 1, -fill => 'both');
 
 $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');
 print "ok ",$idx++,"\n";
@@ -240,6 +240,10 @@ print "ok ",$idx++,"\n";
 $f->command(-label => 'unselect nodes',  
             -command => sub{$tg->unselectAllNodes();} );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
+
+my @array = $tg->bbox("all") ;
+$tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
 
 MainLoop ; # Tk's
 

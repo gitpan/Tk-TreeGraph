@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -46,7 +46,6 @@ sub InitObject
     $dw->{column}{$dw->{currentBranch}} = 0;
 
     $dw->SUPER::InitObject($args) ;
-
   }
 
 
@@ -69,7 +68,7 @@ Tk::TreeGraph - Tk widget to draw a tree in a Canvas
 
  my $mw = MainWindow-> new ;
 
- my $tg = $mw -> Scrolled('TreeGraph') ->pack(expand => 1, fill => 'both');
+ my $tg = $mw -> Scrolled('TreeGraph') ->pack(-expand => 1, -fill => 'both');
 
  $tg -> addLabel (text => 'some tree');
 
@@ -131,6 +130,10 @@ Tk::TreeGraph - Tk widget to draw a tree in a Canvas
  $tg->nodeBind(button => '<3>', color => 'green', 
               command => sub{$tg->popupMenu(@_);});
 
+ # adjust scrolled area with some margin
+ my @array = $tg->bbox("all") ;
+ $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
  MainLoop ; # Tk's
 
 =head1 DESCRIPTION
@@ -161,7 +164,7 @@ different branches.
 
 =back
 
-GraphMgr also provides :
+TreeGraph also provides :
 
 =over 4
 
@@ -187,6 +190,22 @@ even better, patches ;-) .
 
 Note that the tree MUST be drawn from top to bottom and from left to
 right. Unless you may get a very confusing drawing of a tree.
+
+=head1 About Scrolling
+
+First versions of TreeGraph used to tinker with a -scrollregion option
+each time addNode was called. This was not consistent since the
+scrollbars are added by the user when calling TreeGraph (using
+Scrolled('TreeGraph')). Hence from now on, it will be the
+responsability of the user to set a satisfying -scrollregion.
+
+The user may write this after all nodes are drawn to set the scrollregion :
+
+ my @array = $tg->bbox("all") ;
+ $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
+Furthermore, since configure will called only once, the resulting code
+will be faster.
 
 =head1 Widget Options
 
@@ -544,7 +563,7 @@ will get mismatch between the size of the text and the size of the boxes.
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 
-Copyright (c) 1998-1999 Dominique Dumont. All rights reserved.
+Copyright (c) 1998-2000 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
@@ -581,16 +600,14 @@ sub clear
   {
     my $dw = shift ;
     
-    foreach (qw/arrow node nodeId tset xset shortcutFrom x y/)
+    foreach (qw/arrow node nodeId tset xset shortcutFrom x y 
+             tree_start after limit/)
       {
         delete $dw->{$_};
       }
 
     $dw->delete('all');
 
-    $dw->configure(scrollregion => [0,0, 200 , 200 ]) ;
-
-    delete $dw->{limit};
     $dw->{currentBranch} = 'b000';
     $dw->{column}{$dw->{currentBranch}} = 0;
   }
@@ -602,8 +619,8 @@ sub addLabel
     my $text = $args{text} ;
     
     my $defc = $dw->cget('-labelColor') ;
-    $dw->create('text', '7c' , 5 , anchor => 'n' , fill => $defc,
-                               text=> $text, justify => 'center') ;
+    $dw->create('text', '7c' , 5 , -anchor => 'n' , -fill => $defc,
+                               -text=> $text, -justify => 'center') ;
   }
 
 sub checkOverlay
@@ -735,12 +752,12 @@ sub setArrow
         my $defc = $tag eq 'scutarrow'? 
           $dw->cget('-shortcutColor') :  $dw->cget('-arrowColor');
 
-        $dw->itemconfigure($dw->{xset}{arrow}, fill => $defc);
+        $dw->itemconfigure($dw->{xset}{arrow}, -fill => $defc);
       }
 
     my $itemId = $dw->find('withtag' => 'current');
     $dw->{xset}{arrow} = $itemId ;
-    $dw->itemconfigure($itemId, fill => $color) ;
+    $dw->itemconfigure($itemId, -fill => $color) ;
     my $tipNodeId = $dw->{arrow}{tip}{$itemId} ;
     my $endNodeId = $dw->{arrow}{start}{$itemId} ;
 
@@ -777,7 +794,7 @@ sub addSlantedArrow
     my $itemId = $dw->create('line', 
                              $old_x + $branch_dx/2 - 10, $old_y, 
                              $x + $branch_dx/2 - 10, $y,
-                             fill => $defc,
+                             -fill => $defc,
                              -tags => ["arrow","arrow".$dw->{currentBranch}],
                              -arrow =>'last'); 
 
@@ -844,7 +861,9 @@ sub addAllShortcuts
             my $itemId = $dw->create
               (
                'line', @opt ,
-               'arrow' => 'last', 'tag' => 'scutarrow','fill'=>$color
+               -arrow => 'last', 
+               -tag => 'scutarrow',
+               -fill=>$color
               );
             $dw->{arrow}{start}{$itemId} = $mNodeId ;
             $dw->{arrow}{tip}{$itemId} = $nodeId ;
@@ -929,24 +948,6 @@ sub addNode
     $dw -> {node}{text}{$nodeId}=$tid ;
     $dw -> {node}{rectangle}{$nodeId}=$rid ;
     $dw -> {node}{branch}{$nodeId}= $dw->{currentBranch} ;
-
-    # must initialize myself the scrollregion for the first time
-    my $array = $dw->cget('scrollregion') || [0,0, 200, 200];
-    my $mod = 0;
-
-    if ($array->[2] < $x + $branch_dx)
-      {
-        $array->[2] = $x + $branch_dx ;
-        $mod = 1;
-      }
-
-    if ($array->[3] < $y)
-      {
-        $array->[3] = $y + 50 ; # some margin
-        $mod = 1;
-      }
-
-    $dw->configure(scrollregion => $array) if $mod ;
 
     $dw->{x} = $x;
     $dw->{y} = $y ;

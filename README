@@ -10,6 +10,8 @@ TreeGraph is able to draw the following items:
 - shortcuts arrow: an arrow to represent a shortcut between 2 nodes from
   different branches.
 
+TreeGraph is now in realeased status.
+
 Starting from version 1.007, all coordinates are handled by the
 object.  Hence drawing the tree is much simpler.
 
@@ -21,10 +23,14 @@ Hence drawing the tree is even more simple.
 
 Starting from version 1.013, the drawing is more compact.
 
+Starting from version 1.016 TreeGraph no longer messes with
+-scrollregion. When a Scrolled TreeGraph is used, the -scrollregion
+will have to be modified by the user.
+
 
 Suggested DSLI line in the Ptk module list:
 
-Tk::TreeGraph bdpO  Widget to draw a tree in a Canvas    DDUMONT
+Tk::TreeGraph RdpO  Widget to draw a tree in a Canvas    DDUMONT
 
 
 See the embedded documentation in the module for more details.
@@ -35,7 +41,7 @@ Thanks to Ralf Valerien for the bug fix and the spline shortcut arrow.
 
 Legal mumbo jumbo:
 
- Copyright (c) 1999 Dominique Dumont. All rights reserved.
+ Copyright (c) 1999-2000 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or
  modify it under the same terms as Perl itself.
 
