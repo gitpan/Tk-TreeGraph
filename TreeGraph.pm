@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -654,7 +654,7 @@ Will toggle the node rectangle between 'color' and default.
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 
-Copyright (c) 1998-2003 Dominique Dumont. All rights reserved.
+Copyright (c) 1998-2004 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
@@ -846,7 +846,7 @@ sub setArrow
         $dw->itemconfigure($dw->{xset}{arrow}, -fill => $defc);
       }
 
-    my $itemId = $dw->find('withtag' => 'current');
+    my ($itemId) = $dw->find('withtag' => 'current');
     $dw->{xset}{arrow} = $itemId ;
     $dw->itemconfigure($itemId, -fill => $color) ;
     my $tipNodeId = $dw->{arrow}{tip}{$itemId} ;
@@ -1284,14 +1284,8 @@ sub getCurrentNodeId
   {
     my $dw = shift ;
 
-    my $selected = $dw->find('withtag' => 'current');
-        
-    unless (defined $selected)
-      {
-        $dw->bell ;
-        return undef ;
-      }
-        
+    my ($selected) = $dw->find('withtag' => 'current');
+
     unless (defined $selected)
       {
         $dw->bell ; $dw->bell ; # twice for debug ...

@@ -1,3 +1,11 @@
+2004-10-14  Dominique Dumont  <domi@komarr.grenoble.hp.com> v1.029
+
+	* TreeGraph.pm (setArrow): fix bug related to Canvas find method
+	which returns now an array ref in scalar context. I do not know
+	which version of Tk broke TreeGraph, but this new version was
+	tested with Tk 804.027
+	(getCurrentNodeId): ditto. Thanks to Thomas Flasche for the patch.
+
 2003-12-11  Dominique Dumont  <domi@komarr.grenoble.hp.com>
 
 	* TreeGraph.pm: accept leading dash in method parameter

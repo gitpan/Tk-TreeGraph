@@ -30,10 +30,6 @@ will have to be modified by the user.
 Starting from version 1.023, you can modify a node color or text or
 make a node flash.
 
-Suggested DSLI line in the Ptk module list:
-
-Tk::TreeGraph RdpO  Widget to draw a tree in a Canvas    DDUMONT
-
 
 You can run all test with argument '1' to run the test in interactive mode
 with traces. (i.e "perl t/only_node.t 1").
@@ -46,7 +42,7 @@ Thanks to Ralf Valerien for the bug fix and the spline shortcut arrow.
 
 Legal mumbo jumbo:
 
- Copyright (c) 1999-2003 Dominique Dumont. All rights reserved.
+ Copyright (c) 1999-2004 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or
  modify it under the same terms as Perl itself.
 
