@@ -1,3 +1,8 @@
+1999-01-25  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* TreeGraph.pm : fixed shortCut and unselectNodes problems
+	  added comments on internal data structures
+
 1999-01-22  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
 
 	* TreeGraph.pm : better doc

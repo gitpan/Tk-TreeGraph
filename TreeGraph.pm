@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -526,12 +526,40 @@ perl(1), Tk(3), Tk::Canvas(3)
 
 =cut
 
+## data structures (i.e $dw->{...})
+
+# arrow -> start -> hash : key is arrow widget id, 
+#                          value is node Id where the arrow starts
+# arrow -> tip   -> hash : key is arrow widget id, 
+#                          value is node Id where the arrow ends
+
+# node -> top       : [x,y] : coordinates of the top of the rectangle
+# node -> bottom    : [x,y] : coordinates of the bottom of the rectangle
+# node -> text      : text widget ref
+# node -> rectangle : rectangle widget ref
+
+# nodeId->hash ref: key is text or rectangle widget id, value: nodeId
+
+# tset -> hash ref : (toggle set) key is nodeId set by the user, value is
+#                    the rectangle widget id
+
+# xset -> arrow: (eXclusive set) : arrow widget id of the arrow set by the user
+# xset -> node : (eXclusive set) : nodeId of the node set by the user
+
+# shortcutFrom -> hash : key is the nodeId of the start of the shortcut,
+#                        value is the nodeId of the end of the shortcut
+
 ## General functions
 
 sub clear
   {
     my $dw = shift ;
-    delete $dw->{graph} ;
+    
+    foreach (qw/arrow node nodeId tset xset shortcutFrom/)
+      {
+        delete $dw->{$_};
+      }
+
     $dw-> clear() ;
     $dw->configure(scrollregion => [0,0, 1000 , 400 ])
   }
@@ -612,17 +640,17 @@ sub setArrow
     my $color = $args{color} ;
     
     # reset any selected arrow
-    if (defined $dw->{graph}{oldArrow})
+    if (defined $dw->{xset}{arrow})
       {
-        my $tag = $dw->gettags($dw->{graph}{oldArrow});
+        my $tag = $dw->gettags($dw->{xset}{arrow});
         my $defc = $tag eq 'scutarrow'? 
           $dw->cget('-shortcutColor') :  $dw->cget('-arrowColor');
 
-        $dw->itemconfigure($dw->{graph}{oldArrow}, fill => $defc);
+        $dw->itemconfigure($dw->{xset}{arrow}, fill => $defc);
       }
 
     my $itemId = $dw->find('withtag' => 'current');
-    $dw->{graph}{oldArrow} = $itemId ;
+    $dw->{xset}{arrow} = $itemId ;
     $dw->itemconfigure($itemId, fill => $color) ;
     my $tipNodeId = $dw->{arrow}{tip}{$itemId} ;
     my $endNodeId = $dw->{arrow}{start}{$itemId} ;
@@ -672,7 +700,7 @@ sub addShortcutInfo
     my %args = @_ ;
     my $nodeId = $args{from} ;
     my $mNodeId = $args{to} ;
-    $dw->{graph}{shortcutFrom}{$nodeId} = $mNodeId ;
+    $dw->{shortcutFrom}{$nodeId} = $mNodeId ;
   }
 
 sub addAllShortcuts
@@ -681,13 +709,13 @@ sub addAllShortcuts
 
     my $color = $dw->cget('-shortcutColor') || $dw->cget('-foreground');
 
-    foreach my $nodeId (keys %{$dw->{graph}{shortcutFrom}})
+    foreach my $nodeId (keys %{$dw->{shortcutFrom}})
       {
-        my $mNodeId = $dw->{graph}{shortcutFrom}{$nodeId} ;
-        next unless defined $dw->{graph}{bottomCoord}{$mNodeId} ;
-        my ($x, $y) = @{$dw->{graph}{bottomCoord}{$mNodeId}} ;
-        my ($dx, $dy) = @{$dw->{graph}{topCoord}{$nodeId}} ;
-        my $itemId = $dw->create('line', $x, $y, $dx, $dy,  
+        my $mNodeId = $dw->{shortcutFrom}{$nodeId} ;
+        next unless defined $dw->{node}{bottom}{$mNodeId} ;
+        my ($bx, $by) = @{$dw->{node}{bottom}{$nodeId}} ; # beginning of arrow
+        my ($ex, $ey) = @{$dw->{node}{top}{$mNodeId}} ; # end of arrow
+        my $itemId = $dw->create('line', $bx, $by, $ex, $ey,  
                'arrow' => 'last', 'tag' => 'scutarrow','fill'=>$color);
         $dw->{arrow}{start}{$itemId} = $mNodeId ;
         $dw->{arrow}{tip}{$itemId} = $nodeId ;
@@ -767,18 +795,18 @@ sub toggleNode
 
     my $rid = $dw->{node}{rectangle}{$nodeId} ; # retrieve id of rectangle
 
-    if (defined $dw->{node}{selected}{$nodeId})
+    if (defined $dw->{tset}{node}{$nodeId})
       {
         my $defc = $dw->cget('-foreground');
         $dw->itemconfigure($rid, outline => $defc) ; #unselect
-        delete $dw->{node}{selected}{$nodeId} ;
+        delete $dw->{tset}{node}{$nodeId} ;
       } 
     else
       {
         die "Error no color specified while selecting node\n"
           unless defined $color ;
         $dw->itemconfigure($rid, outline => $color) ;
-        $dw->{node}{selected}{$nodeId} = $rid ; # store id of rectangle
+        $dw->{tset}{node}{$nodeId} = $rid ; # store id of rectangle
       } 
 
     $dw->idletasks;
@@ -788,17 +816,19 @@ sub toggleNode
 sub getSelectedNodes
   {
     my $dw = shift ;
-    return keys %{$dw->{node}{selected}} ;
+    return keys %{$dw->{tset}{node}} ;
   }
 
 sub unselectAllNodes
   {
     my $dw = shift ;
 
-    foreach my $itemId (values %{$dw->{graph}{selected}})
+    my $defc = $dw->cget('-foreground');
+    foreach (values %{$dw->{tset}{node}})
       {
-        $dw->toggleNode(itemId => $itemId);
+        $dw->itemconfigure($_, outline => $defc) ; #unselect
       }
+    delete $dw->{tset}{node} ;
   }
 
 sub getCurrentNodeId
@@ -831,14 +861,14 @@ sub setNode
     my $color = $args{color} ;
     my $nodeId = $args{nodeId} || $dw->getCurrentNodeId ; # optional
 
-    if (defined $dw->{graph}{oldNode})
+    if (defined $dw->{xset}{node})
       {
         my $defc = $dw->cget('-nodeTextColor') || $dw->cget('-foreground');
-        $dw->itemconfigure($dw->{graph}{oldNode},fill => $defc);
+        $dw->itemconfigure($dw->{xset}{node},fill => $defc);
       }
 
     my $itemId = $dw->{node}{text}{$nodeId} ;
-    $dw->{graph}{oldNode} = $itemId ;
+    $dw->{xset}{node} = $itemId ;
     $dw->itemconfigure($itemId, fill => $color) ;
 
     return $dw->{nodeId}{$itemId} ;

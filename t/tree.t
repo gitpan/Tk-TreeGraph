@@ -32,10 +32,13 @@ $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
   -> pack(side => 'left' );
-$f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 
 $mw->Label(text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
 $mw->Label(text => 'click on button 1,2 and 3 on rectangles or embedded text')
+  ->pack(-fill => 'x') ;
+$mw->Label(text => 'Once you have selected several rectangles (button <1>),')
+  ->pack(-fill => 'x') ;
+$mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
 my $tg = $mw -> Scrolled('TreeGraph')->pack(expand => 1, fill => 'both');
@@ -184,8 +187,14 @@ $tg -> addNode
 
 $tg->addShortcutInfo
   (
-   from => '1.2',
-   to => '1.0.2.1'
+   to => '1.2',
+   from => '1.0.2.1'
+  ) ;
+
+$tg->addShortcutInfo
+  (
+   to => '1.3',
+   from => '1.0.1.2'
   ) ;
 
 print "ok ",$idx++,"\n";
@@ -197,7 +206,7 @@ print "ok ",$idx++,"\n";
 $tg->arrowBind
   (
    button => '<1>',
-   color => 'orange',
+   color => 'yellow',
    command =>  sub{my %h = @_;
                    warn "clicked 1 arrow $h{from} -> $h{to}\n";}
   );
@@ -227,6 +236,10 @@ $tg->nodeBind(button => '<3>', color => 'green',
               command => sub{$tg->popupMenu(@_);});
 
 print "ok ",$idx++,"\n";
+
+$f->command(-label => 'unselect nodes',  
+            -command => sub{$tg->unselectAllNodes();} );
+$f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 
 MainLoop ; # Tk's
 
