@@ -27,6 +27,8 @@ my $trace = shift || 0 ;
 
 my $mw = MainWindow-> new ;
 
+$mw->geometry('600x450+10+10');
+
 my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
@@ -41,7 +43,11 @@ $mw->Label(text => 'Once you have selected several rectangles (button <1>),')
 $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
-my $tg = $mw -> Scrolled('TreeGraph')->pack(expand => 1, -fill => 'both');
+my $tg = $mw -> Scrolled('TreeGraph', -animation => 500 )
+  ->pack(expand => 1, -fill => 'both');
+
+$tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
+  unless $trace ;
 
 $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');
 print "ok ",$idx++,"\n";
@@ -244,6 +250,11 @@ $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 my @array = $tg->bbox("all") ;
 $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
 
+
+unless ($trace)
+  {
+    $tg->after(2000, sub{$mw->destroy;});
+  }
 
 MainLoop ; # Tk's
 

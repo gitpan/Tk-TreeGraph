@@ -1,3 +1,11 @@
+2001-04-02  Dominique Dumont  <domi@komarr.grenoble.hp.com>
+
+	* TreeGraph.pm :
+ 	- added viewNode method
+	- added -animation option
+        - added demo for Tk widget program
+        - test run now in batch mode
+
 2000-05-15  Dominique Dumont  <domi@ispserv.grenoble.hp.com> v1.023
 
 	* TreeGraph.pm : 

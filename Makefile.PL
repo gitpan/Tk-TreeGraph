@@ -6,7 +6,12 @@ WriteMakefile
    'NAME'	=> 'Tk::TreeGraph',
    'VERSION_FROM' => 'TreeGraph.pm',
    'dist' => {COMPRESS=>'gzip -9f', SUFFIX => 'gz'},
+   PM            => 
+   {  
+    'TreeGraph.pm'   => '$(INST_LIB)/Tk/TreeGraph.pm',
+    'demo/treegraph.pl' => '$(INST_ARCHLIB)/Tk/demos/widtrib/treegraph.pl'
+   },
    ($] >= 5.005 ?
     (ABSTRACT   => 'Widget to draw a tree in a Canvas',
      AUTHOR     => 'Dominique Dumont (domi@barrayar.grenoble.hp.com)') : ())
-);
+  );

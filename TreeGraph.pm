@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -26,6 +26,7 @@ sub InitObject
       (
        -shortcutColor  => ['PASSIVE', undef, undef, 'orange'],
        -shortcutStyle  => ['PASSIVE', undef, undef, 'straight'],
+       -animation      => ['PASSIVE', undef, undef, 0 ],
        -nodeColor      => ['PASSIVE', undef, undef, $defc],
        -nodeFill => ['PASSIVE', undef, undef, undef ],
        -arrowColor     => ['PASSIVE', undef, undef, $defc],
@@ -69,7 +70,8 @@ Tk::TreeGraph - Tk widget to draw a tree in a Canvas
 
  my $mw = MainWindow-> new ;
 
- my $tg = $mw -> Scrolled('TreeGraph') ->pack(-expand => 1, -fill => 'both');
+ my $tg = $mw -> Scrolled('TreeGraph') ->
+  pack(-expand => 1, -fill => 'both');
 
  $tg -> addLabel (text => 'some tree');
 
@@ -133,7 +135,8 @@ Tk::TreeGraph - Tk widget to draw a tree in a Canvas
 
  # adjust scrolled area with some margin
  my @array = $tg->bbox("all") ;
- $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+ $tg->configure(-scrollregion => 
+                [0, 0, $array[2] + 50, $array[3] + 50 ]);
 
  MainLoop ; # Tk's
 
@@ -212,51 +215,59 @@ will be faster.
 
 =over 4
 
-=item *
+=item -nodeColor: 
 
--nodeColor: Color of the node rectangle.
+Color of the node rectangle.
 
-=item *
+=item -nodeTextColor:
 
--nodeTextColor: Color of the text within the nodes
+Color of the text within the nodes
 
-=item *
+=item -labelColor
 
--labelColor
+Color of the label.
 
-=item *
+=item -arrowColor
 
--arrowColor
+Color of the arrow.
 
-=item *
+=item -shortcutColor:
 
--shortcutColor: Color of the shortcut arrow (default 'orange')
+Color of the shortcut arrow (default 'orange')
 
-=item *
+=item -shortcutStyle:
 
--shortcutStyle: Style of the shortcut arrow. The arrow can be drawn as 
-a 'straight' arrow or a 'spline'. (default 'straight')
+Style of the shortcut arrow. The arrow can be drawn as a 'straight'
+arrow or a 'spline'. (default 'straight')
 
-=item *
+=item -nodeTag:
 
--nodeTag: boolean. By default the nodeId is added at the beginning of
-the node text.
+Boolean. By default the nodeId is added at the beginning of the node
+text.
 
-=item *
+=item -arrowDeltaY:
 
--arrowDeltaY: length of direct arrows (downward). default 40
+Length of direct arrows (downward). default 40
 
-=item *
+=item -branchSeparation: 
 
--branchSeparation: minimum width between 2 branches of the tree (default 120) 
+Minimum width between 2 branches of the tree (default 120) 
 
-=item *
+=item -x_start:
 
--x_start: x coordinate of the root of the tree. (default 100)
+x coordinate of the root of the tree. (default 100)
 
-=item *
+=item -y_start: 
 
--y_start: y coordinate of the root of the tree.(default 100)
+y coordinate of the root of the tree.(default 100)
+
+=item -animation: 
+
+Delay (in ms), if delay is positive, TreeGraph will update the canvas
+widget any time the addNode method is called and wait delay ms. This
+enable to make pretty animation when drawing complex trees. This
+feature will work only if a scrollregion is set before calling
+addNode.
 
 =back
 
@@ -270,6 +281,8 @@ parameter. Then the object will infer the kind of arrow needed between the
 to call youself the addSlantedArrow or addDirectArrow methods.
 
 =head2 addNode(...)
+
+Parameters are:
 
 =over 4
 
@@ -296,6 +309,8 @@ Note that this method will add the nodeId on top of the passed text
 ('text' parameter).
 
 =head2 modifyNode(...)
+
+Parameters are:
 
 =over 4
 
@@ -327,7 +342,14 @@ nodeFill: new color filling the rectangle.
 Will modify an existing node. Note that the geometry of the node will not
 be changed.
 
+=head2 viewNode(nodeId)
+
+Will move the canvas so that the node is visible within the scrolled area.
+(do nothing if the scroll region is not defined TBD XXX)
+
 =head2 flashNode(...)
+
+Parameters are:
 
 =over 4
 
@@ -360,7 +382,7 @@ a node will make the flashing stop.
 
 You can use this method if you want to change the default aspect of
 the direct arrow. In this case do not use the 'after' parameter of the
-addNode() method.
+addNode() method. Parameters are:
 
 =over 4
 
@@ -404,7 +426,7 @@ Add a new branch connecting node 'id' to node 'id2'.  Note that the
 
 =head2 addLabel(...)
 
-Put some text on the top of the graph.
+Put some text on the top of the graph. Parameters are:
 
 =over 4
 
@@ -415,6 +437,8 @@ text: text to be inserted on the top of the graph.
 =back
 
 =head2 addShortcutInfo(...)
+
+Parameters are:
 
 =over 4
 
@@ -447,6 +471,8 @@ Clear the graph.
 
 =head2 nodeBind(...)
 
+Parameters are:
+
 =over 4
 
 =item *
@@ -470,6 +496,8 @@ with these parameters:
  (on => 'node', nodeId => $nodeId)
 
 =head2 arrowBind(...)
+
+Parameters are:
 
 =over 4
 
@@ -564,6 +592,8 @@ inherit this widget.
 
 =head2 setArrow(...)
 
+Parameters are:
+
 =over 4
 
 =item *
@@ -579,6 +609,8 @@ Returns (from => $endNodeId, to => $tipNodeId) to specify the nodes
 the arrow is attached to.
 
 =head2 setNode()
+
+Parameters are:
 
 =over 4
 
@@ -601,6 +633,8 @@ if this function was used in a bind)
 
 =head2 toggleNode(...)
 
+Parameters are:
+
 =over 4
 
 =item *
@@ -620,13 +654,13 @@ Will toggle the node rectangle between 'color' and default.
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 
-Copyright (c) 1998-2000 Dominique Dumont. All rights reserved.
+Copyright (c) 1998-2001 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-perl(1), Tk(3), Tk::Canvas(3)
+L<Tk>, L<Tk::Canvas>
 
 =cut
 
@@ -959,7 +993,7 @@ sub addNode
           }
       }
     
-    # initialiaztion
+    # initialization
     $dw->{tree_start}=$dw->cget('-x_start') unless defined $dw->{tree_start};
     
     # compute text to draw
@@ -992,9 +1026,10 @@ sub addNode
     $defc = $args{nodeColor} || $args{-nodeColor} || $dw->cget('-nodeColor');
     my $bgc = $args{nodeFill} || $args{-nodeFill} 
       || $dw->cget('-nodeFill');
+    my $newx = $x + $branch_dx   - 20 ;
     my $rid = $dw->create('rectangle',
                           $x , $oldy,
-                          $x + $branch_dx   - 20 , $y,
+                          $newx , $y,
                           -outline => $defc, -width => 2 , -fill => $bgc ,
                           -tags => ['node', $dw->{currentBranch}]
                         ) ;
@@ -1012,6 +1047,68 @@ sub addNode
 
     $dw->{x} = $x;
     $dw->{y} = $y ;
+
+    my $delay = $dw->cget('-animation') ;
+
+    if ($delay)
+      {
+        $dw->viewNode($nodeId) and $dw->after($delay);
+      }
+  }
+
+sub viewNode
+  {
+    my $dw = shift ;
+    my $nodeId = shift;
+
+    my @sc = $dw->cget('-scrollregion');
+
+    # even if the scrollregion is not defined, the array has 4 elements
+    # so i must tesst one of the elements of the array
+    return 0 unless (defined $sc[0]) ; # 
+
+    my @bb = $dw->bbox("all") ;
+
+    # adjust scroll region is something is outside of it
+    foreach my $i (0,1)
+      {
+        $sc[$i] = $bb[$i] - 50 if ($bb[$i] < $sc[$i]);
+      }
+    foreach my $i (2,3)
+      {
+        $sc[$i] = $bb[$i] + 50 if ($bb[$i] > $sc[$i]);
+      }
+
+    $dw->configure(-scrollregion => \@sc );
+
+    # get the rectangle coordinates
+    my $rectangle_id = $dw -> {node}{rectangle}{$nodeId};
+    my ($rx1,$ry1,$rx2,$ry2)= $dw->coords($rectangle_id);
+
+    # get the full canvas coordinates
+    my ($cx1,$cy1,$cx2,$cy2) = @sc;
+    # compute where is the node within this widget (fraction)
+    my ($xf1,$yf1,$xf2,$yf2) = 
+      ($rx1/($cx2-$cx1), $ry1/($cy2-$cy1), $rx2/($cx2-$cx1), $ry2/($cy2-$cy1));
+
+    # check if xf is out of view
+    my ($xvleft,$xvright) = $dw->xview ;
+    my $deltax = $xvright - $xvleft ;
+
+    # put the widget at the center (x wise)
+    $dw->xview(moveto=> (($xf1 + $xf2 - $deltax) / 2) )
+      if ($xf1< $xvleft or $xf2> $xvright);
+
+    # check if yf is out of view
+    my ($yvtop,$yvbottom) = $dw->yview ;
+    my $deltay = $yvbottom - $yvtop ;
+    $dw->yview(moveto=>(($yf1 + $yf2 - $deltay) / 2 ) )
+      if ($yf1 < $yvtop or $yf2 > $yvbottom);
+
+    # print "delay $x $y, fx $xf fy $yf\n" ;
+    $dw->idletasks;
+
+    return 1 ;
   }
 
 sub modifyNode
@@ -1087,6 +1184,8 @@ sub flashNode
         return ;
       }
     
+    $dw->viewNode($nodeId) ;
+
     my $time = $args{time} || 500 ;
     $dw -> {node}{flash}{$nodeId} = 1 ;
 

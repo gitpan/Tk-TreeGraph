@@ -24,7 +24,10 @@ print "ok ",$idx++,"\n";
 
 use strict ;
 
+my $trace = shift || 0 ;
+
 my $mw = MainWindow-> new ;
+$mw->geometry('600x450+10+10');
 
 my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
@@ -38,9 +41,13 @@ $mw->Label(text => 'tree graph with option -shortcutStyle set to spline')
 $mw->Label(text => 'Courtesy of Ralf Valerien')
   ->pack(-fill => 'x') ;
 
-my $tg = $mw->Scrolled( 'TreeGraph', -shortcutStyle => 'spline' )
+my $tg = $mw->Scrolled( 'TreeGraph', -shortcutStyle => 'spline',
+                      -animation => 800 )
   ->pack( expand => 1, fill => 'both' );
 print "ok ",$idx++,"\n";
+
+$tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
+  unless $trace ;
 
 $tg->addLabel( text => 'some tree');
 
@@ -93,6 +100,11 @@ print "ok ",$idx++,"\n";
 
 my @array = $tg->bbox("all") ;
 $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
+unless ($trace)
+  {
+    $tg->after(2000, sub{$mw->destroy;});
+  }
 
 MainLoop ; # Tk's
 

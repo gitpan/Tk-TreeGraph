@@ -26,6 +26,7 @@ use strict ;
 my $trace = shift || 0 ;
 
 my $mw = MainWindow-> new ;
+$mw->geometry('600x450+10+10');
 
 my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
@@ -42,8 +43,11 @@ $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
 my $tg = $mw -> Scrolled(qw/TreeGraph -nodeColor red -nodeTextColor yellow
-                         -nodeFill blue4/)
-  ->pack(expand => 1, fill => 'both');
+                         -nodeFill blue4/);
+$tg->pack(expand => 1, fill => 'both');
+
+$tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
+  unless $trace ;
 
 $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');
 print "ok ",$idx++,"\n";
@@ -199,6 +203,10 @@ $tg->arrowBind
 
 print "ok ",$idx++,"\n";
 
+#$tg->arrowBind(button => '<2>', color => 'green',
+#               command => sub {print "hit z\n";
+#                               $tg->scale("all",0,0,0.5,0.5);});
+
 $tg->nodeBind
   (
    button => '<2>',
@@ -229,6 +237,12 @@ $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 
 my @array = $tg->bbox("all") ;
 $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
+
+unless ($trace)
+  {
+    $tg->after(2000, sub{$mw->destroy;});
+  }
+
 
 MainLoop ; # Tk's
 

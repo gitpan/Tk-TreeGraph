@@ -184,13 +184,14 @@ sub draw
        from => 'martian node1'
       ) ;
     
-    # test out-of sync drawings
-    $tg -> addNode 
-      (
-       after => '1.5',
-       nodeId => '1.6',
-       text => $ref
-      ) ;
+    # test out-of sync drawings, alas it does not work 
+    # to work, the drawing algorithm must be re-done ...
+#    $tg -> addNode 
+#      (
+#       after => '1.5',
+#       nodeId => '1.6',
+#       text => $ref
+#      ) ;
     
     print "ok ",$idx++,"\n" if $pok;
     
@@ -237,6 +238,7 @@ sub draw
 my $trace = shift || 0 ;
 
 my $mw = MainWindow-> new ;
+$mw->geometry('600x450+10+10');
 
 my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
@@ -252,8 +254,11 @@ $mw->Label(text => 'Once you have selected several rectangles (button <1>),')
 $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
-$tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/)
-  ->pack(expand => 1, fill => 'both');
+$tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/);
+
+$tg -> pack(expand => 1, fill => 'both');
+$tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
+  unless $trace ;
 
 &draw(1);
 
@@ -268,6 +273,6 @@ $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 my @array = $tg->bbox("all") ;
 $tg->configure(-scrollregion => [0, 0, $array[2] + 50, $array[3] + 50 ]);
 
-MainLoop ; # Tk's
+MainLoop if $trace; # Tk's
 
 print "ok ",$idx++,"\n";
