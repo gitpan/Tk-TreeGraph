@@ -1,3 +1,4 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
 use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -34,17 +35,17 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 $f->command(-label => 'Quit',  -command => sub{$mw->destroy();} );
 
-$mw->Label(text => 'tree graph with option -shortcutStyle set to spline')
+$mw->Label(-text => 'tree graph with option -shortcutStyle set to spline')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'Courtesy of Ralf Valerien')
+$mw->Label(-text => 'Courtesy of Ralf Valerien')
   ->pack(-fill => 'x') ;
 
 my $tg = $mw->Scrolled( 'TreeGraph', -shortcutStyle => 'spline',
                       -animation => 800 )
-  ->pack( expand => 1, fill => 'both' );
+  ->pack( -expand => 1, -fill => 'both' );
 print "ok ",$idx++,"\n";
 
 $tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
@@ -88,13 +89,13 @@ $tg->nodeBind( button => '<2>', color => 'red',
   command => sub {my %h = @_; warn "clicked 2 node $h{nodeId}\n";}
 );
 
-$tg->command( on => 'arrow', label => 'dummy 2',
-  command => sub{warn "arrow menu dummy2\n";}  );
-$tg->arrowBind( button => '<3>', color => 'green',
-  command => sub{$tg->popupMenu(@_);}   );
+$tg->command( -on => 'arrow', -label => 'dummy 2',
+  -command => sub{warn "arrow menu dummy2\n";}  );
+$tg->arrowBind( -button => '<3>', -color => 'green',
+  -command => sub{$tg->popupMenu(@_);}   );
 
-$tg->command( on => 'node', label => 'dummy 1',
-  command => sub{warn "node menu dummy1\n";}   );
+$tg->command( -on => 'node', -label => 'dummy 1',
+  -command => sub{warn "node menu dummy1\n";}   );
 $tg->nodeBind( button => '<3>', color => 'green',
   command => sub{$tg->popupMenu(@_);}   );
 print "ok ",$idx++,"\n";

@@ -1,3 +1,4 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
 use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -29,24 +30,24 @@ use strict ;
 sub draw 
   {
     my $pok = shift ;
-    $tg -> addLabel (text => 'Make Node 1.1 with File->start flash');
+    $tg -> addLabel (-text => 'Make Node 1.1 with File->start flash');
     print "ok ",$idx++,"\n" if $pok;
     
     my $ref = [qw/some really_silly text with no tag/];
     
     $tg -> addNode 
       (
-       nodeId => '1.0', 
-       text => $ref
+       -nodeId => '1.0', 
+       -text => $ref
       ) ;
     
     print "ok ",$idx++,"\n" if $pok;
     
-    $tg -> addNode (after => '1.0', nodeId => '1.1', text => $ref) ;
-    $tg -> addNode (after => '1.1', nodeId => '1.2', text => $ref) ;
-    $tg -> addNode (after => '1.2', nodeId => '1.3', text => $ref) ;
-    $tg -> addNode (after => '1.3', nodeId => '1.4', text => $ref) ;
-    $tg -> addNode (after => '1.4', nodeId => '1.5', text => $ref) ;
+    $tg -> addNode (-after => '1.0', -nodeId => '1.1', -text => $ref) ;
+    $tg -> addNode (-after => '1.1', -nodeId => '1.2', -text => $ref) ;
+    $tg -> addNode (-after => '1.2', -nodeId => '1.3', -text => $ref) ;
+    $tg -> addNode (-after => '1.3', -nodeId => '1.4', -text => $ref) ;
+    $tg -> addNode (-after => '1.4', -nodeId => '1.5', -text => $ref) ;
  }
 
 my $trace = shift || 0 ;
@@ -58,10 +59,10 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 
 $tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/);
-$tg  ->pack(expand => 1, fill => 'both');
+$tg  ->pack(-expand => 1, -fill => 'both');
 
 $tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
   unless $trace ;
@@ -79,11 +80,11 @@ my $flash_on = sub
    {
      $tg->flashNode 
        (
-        nodeId => '1.1' , 
-        nodeColor =>'red4', 
-        nodeFill => 'red4', 
-        nodeTextColor => 'white',
-        time => 200
+        -nodeId => '1.1' , 
+        -nodeColor =>'red4', 
+        -nodeFill => 'red4', 
+        -nodeTextColor => 'white',
+        -time => 200
        );
    } ;
 
@@ -91,7 +92,7 @@ my $flash_off =  sub
    {
      $tg->flashNode 
        (
-        nodeId => '1.1' 
+        -nodeId => '1.1' 
        );
    } ;
 

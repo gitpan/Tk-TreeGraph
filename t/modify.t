@@ -1,3 +1,4 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
 use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -29,24 +30,24 @@ use strict ;
 sub draw 
   {
     my $pok = shift ;
-    $tg -> addLabel (text => 'Modify Node 1.1 with File->modify*');
+    $tg -> addLabel (-text => 'Modify Node 1.1 with File->modify*');
     print "ok ",$idx++,"\n" if $pok;
     
     my $ref = [qw/some really_silly text with no tag/];
     
     $tg -> addNode 
       (
-       nodeId => '1.0', 
-       text => $ref
+       -nodeId => '1.0', 
+       -text => $ref
       ) ;
     
     print "ok ",$idx++,"\n" if $pok;
     
     $tg -> addNode 
       (
-       after => '1.0', 
-       nodeId => '1.1',
-       text => $ref
+       -after => '1.0', 
+       -nodeId => '1.1',
+       -text => $ref
       ) ;
   }
 
@@ -59,10 +60,10 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 
 $tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/);
-$tg  ->pack(expand => 1, fill => 'both');
+$tg  ->pack(-expand => 1, -fill => 'both');
 
 $tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
   unless $trace ;
@@ -77,14 +78,14 @@ $f->command(-label => 'draw',
             -command => sub{draw(0);} );
 
 my $mod_text_color = 
-  sub{$tg->modifyNode(nodeId => '1.1', nodeTextColor => 'red');};
+  sub{$tg->modifyNode(-nodeId => '1.1', -nodeTextColor => 'red');};
 
 my $mod_text = sub 
    {
      $tg->modifyNode 
        (
-        nodeId => '1.1', 
-        text => "another\nstupid\ntext\n"
+        -nodeId => '1.1', 
+        -text => "another\nstupid\ntext\n"
        );
    };
 
@@ -92,8 +93,8 @@ my $mod_node_color = sub
    {
      $tg->modifyNode 
        (
-        nodeId => '1.1', 
-        nodeColor => 'red', nodeFill => 'LightGreen'
+        -nodeId => '1.1', 
+        -nodeColor => 'red', -nodeFill => 'LightGreen'
        );
    };
 

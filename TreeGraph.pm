@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -707,7 +707,7 @@ sub addLabel
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $text = $args{text} ;
+    my $text = defined $args{-text} ?  $args{-text} : $args{text} ;
     
     my $defc = $dw->cget('-labelColor') ;
     $dw->create('text', '7c' , 5 , -anchor => 'n' , -fill => $defc,
@@ -772,8 +772,8 @@ sub addDirectArrow
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $nodeId = $args{from} ;
-    my $lowerNodeId =  $args{to} ;
+    my $nodeId = defined $args{-from} ? $args{-from}:  $args{from};
+    my $lowerNodeId = defined $args{-to} ? $args{-to} : $args{to};
 
     $dw->{after}{$nodeId}=1;
     my $branch_dx= $dw->cget('-branchSeparation');
@@ -796,7 +796,7 @@ sub addDirectArrow
     $dw->{arrow}{start}{$itemId} = $nodeId ; 
     $dw->{arrow}{tip}{$itemId} = $lowerNodeId ; 
 
-    $dw->{y} = $y ;
+    $dw->{'y'} = $y ;
   }
 
  # will call-back sub with ($start_nodeId,$tip_nodeId) nodeId 
@@ -804,9 +804,9 @@ sub arrowBind
   { 
     my $dw = shift ; 
     my %args = @_ ; 
-    my $button = $args{button} ; 
-    my $color = $args{color} ; 
-    my $callback = $args{command} ;
+    my $button = defined $args{-button} ? $args{-button} : $args{button}; 
+    my $color  = defined $args{-color}  ? $args{-color}  : $args{color}; 
+    my $callback = defined $args{-command} ? $args{-command} : $args{command} ;
 
     # bind button <1> on arrows to display history information
     $dw->bind
@@ -834,7 +834,7 @@ sub setArrow
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $color = $args{color} ;
+    my $color = defined $args{-color} ? $args{-color} : $args{color};
     
     # reset any selected arrow
     if (defined $dw->{xset}{arrow})
@@ -861,9 +861,9 @@ sub addSlantedArrow
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $nodeId = $args{from} ;
-    my $branch =  $args{to} ;
-    my $y = $dw->{y} ;
+    my $nodeId = defined $args{-from} ? $args{-from} : $args{from};
+    my $branch = defined  $args{-to} ? $args{-to} : $args{to} ;
+    my $y = $dw->{'y'} ;
 
     $dw->BackTrace("AddSlantedArrow: unknown 'from' nodeId: $nodeId\n")
       unless defined $dw->{node}{rectangle}{$nodeId};
@@ -912,8 +912,8 @@ sub addShortcutInfo
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $nodeId = $args{from} ;
-    my $mNodeId = $args{to} ;
+    my $nodeId = defined $args{-from} ? $args{-from} : $args{from} ;
+    my $mNodeId = defined  $args{-to} ? $args{-to} : $args{to} ;
 
     push( @{$dw->{shortcutFrom}{$nodeId}}, $mNodeId );
   }
@@ -970,12 +970,14 @@ sub addNode
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $nodeId = $args{nodeId} ;
-    my $text = ref $args{text} ? join("\n",@{$args{text}}) : $args{text} ;
+
+    my $nodeId = $args{-nodeId} || $args{nodeId} ;
+    my $text_parm = defined $args{-text} ? $args{-text} : $args{text} ;
+    my $text = ref $text_parm ? join("\n",@$text_parm) : $text_parm ;
     chomp $text;
 
     #print "Drawing node $nodeId\n";
-    my $after = $args{after};
+    my $after = defined $args{-after} ? $args{-after} : $args{after};
     if (defined $after)
       {
         if (ref($after) eq 'ARRAY')
@@ -1010,7 +1012,7 @@ sub addNode
 
     # compute y coord
     # draw node text
-    my $defc = $args{nodeTextColor} || $args{-nodeTextColor} 
+    my $defc = $args{-nodeTextColor} || $args{nodeTextColor} 
       || $dw->cget('-nodeTextColor');
 
     my $tid = $dw->create('text', $x + $branch_dx/2 - 10, $oldy + 5, 
@@ -1023,8 +1025,8 @@ sub addNode
     $y = $box[3] + 5 ;
 
     # draw node rectangle
-    $defc = $args{nodeColor} || $args{-nodeColor} || $dw->cget('-nodeColor');
-    my $bgc = $args{nodeFill} || $args{-nodeFill} 
+    $defc = $args{-nodeColor} || $args{nodeColor} || $dw->cget('-nodeColor');
+    my $bgc = $args{-nodeFill} || $args{nodeFill} 
       || $dw->cget('-nodeFill');
     my $newx = $x + $branch_dx   - 20 ;
     my $rid = $dw->create('rectangle',
@@ -1116,50 +1118,54 @@ sub modifyNode
     my $dw = shift ;
     my %args = @_ ;
 
-    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    my $nodeId = $args{-nodeId} || $args{nodeId} || $dw->getCurrentNodeId; # optional
+
     croak "modifyNode: missing nodeId parameter" 
-      unless defined $args{nodeId};
+      unless defined $nodeId;
 
     my $rid = $dw->{node}{rectangle}{$nodeId} ; # retrieve id of rectangle
     my $tid = $dw->{node}{text}{$nodeId} ; 
 
     croak "modifyNode: unknown nodeId : $nodeId" unless defined $rid ;
 
-    if (defined $args{nodeColor})
+    my $nc = $args{-nodeColor} || $args{nodeColor} ;
+    if (defined $nc)
       {
-        $dw->itemconfigure($rid, -outline => $args{nodeColor}) ;
+        $dw->itemconfigure($rid, -outline => $nc) ;
       }
-    
-    if (defined $args{text})
+
+    my $text_parm = defined $args{-text} ? $args{-text} : $args{text} ;
+    if (defined $text_parm)
       {
-        my $text = ref $args{text} ? join("\n",$args{text}) : $args{text};
+        my $text = ref $text_parm ? join("\n",$text_parm) : $text_parm;
         chomp $text ;
 
         $text = $nodeId."\n$text" if $dw->cget('-nodeTag') ;
         my $count = $text ;
         $count =~ s/[^\n]// ;
-        
+
         my $oldText = $dw->itemcget($tid, '-text' ) ;
         $oldText =~ s/[^\n]// ;
-        
+
         if (length($count) > length($oldText))
           {
             croak "modifyNode error: New text is longer than the old one. It will no fit in the node" ;
           }
-        
+
         $dw->itemconfigure($tid, -text => $text) ;
       }
-    
-    if (defined $args{nodeTextColor})
+
+    my $ntc = $args{-nodeTextColor} || $args{nodeTextColor} ;
+    if (defined $ntc)
       {
-        $dw->itemconfigure($tid, -fill => $args{nodeTextColor}) ;
+        $dw->itemconfigure($tid, -fill => $ntc) ;
       }
-    
-    if (defined $args{nodeFill})
+
+    my $nf = $args{-nodeFill} || $args{nodeFill} ;
+    if (defined $nf)
       {
-        $dw->itemconfigure($rid, -fill => $args{nodeFill}) ;
+        $dw->itemconfigure($rid, -fill => $nf) ;
       }
-    
   }
 
 sub flashNode
@@ -1167,9 +1173,9 @@ sub flashNode
     my $dw = shift ;
     my %args = @_ ;
 
-    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    my $nodeId = $args{-nodeId} || $args{nodeId} || $dw->getCurrentNodeId; # optional
     croak "modifyNode: missing nodeId parameter" 
-      unless defined $args{nodeId};
+      unless defined $nodeId;
 
     my $rid = $dw->{node}{rectangle}{$nodeId} ; # retrieve id of rectangle
     my $tid = $dw->{node}{text}{$nodeId} ; 
@@ -1186,16 +1192,17 @@ sub flashNode
     
     $dw->viewNode($nodeId) ;
 
-    my $time = $args{time} || 500 ;
+    my $time = $args{-time} || $args{time} || 500 ;
     $dw -> {node}{flash}{$nodeId} = 1 ;
 
     my $oldNodeColor = $dw->itemcget($rid, '-outline') ;
     my $oldNodeTextColor = $dw->itemcget($tid, '-fill') ;
     my $oldNodeFill = $dw->itemcget($rid, '-fill') ;
 
-    my $newNodeColor = $args{nodeColor} || $oldNodeColor ;
-    my $newNodeTextColor = $args{nodeTextColor} || $oldNodeTextColor ;
-    my $newNodeFill = $args{nodeFill} || $oldNodeFill ;
+    my $newNodeColor = $args{-nodeColor} || $args{nodeColor} || $oldNodeColor ;
+    my $newNodeTextColor = $args{-nodeTextColor} ||$args{nodeTextColor} 
+      || $oldNodeTextColor ;
+    my $newNodeFill = $args{-nodeFill} || $args{nodeFill} || $oldNodeFill ;
 
     my ($on,$off) ;
 
@@ -1224,22 +1231,22 @@ sub toggleNode
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $color = $args{color} ;
-    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    my $color = $args{-color} || $args{color} ;
+    my $nodeId = $args{-nodeId} || $args{nodeId} || $dw->getCurrentNodeId; # optional
 
     my $rid = $dw->{node}{rectangle}{$nodeId} ; # retrieve id of rectangle
 
     if (defined $dw->{tset}{node}{$nodeId})
       {
         my $defc = $dw->cget('-nodeColor');
-        $dw->itemconfigure($rid, outline => $defc) ; #unselect
+        $dw->itemconfigure($rid, -outline => $defc) ; #unselect
         delete $dw->{tset}{node}{$nodeId} ;
       } 
     else
       {
         die "Error no color specified while selecting node\n"
           unless defined $color ;
-        $dw->itemconfigure($rid, outline => $color) ;
+        $dw->itemconfigure($rid, -outline => $color) ;
         $dw->{tset}{node}{$nodeId} = $rid ; # store id of rectangle
       } 
 
@@ -1251,7 +1258,7 @@ sub getNodeRectangle
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId; # optional
+    my $nodeId = $args{-nodeId} || $args{nodeId} || $dw->getCurrentNodeId; # optional
     return $dw->{node}{rectangle}{$nodeId} ;
   }
 
@@ -1268,7 +1275,7 @@ sub unselectAllNodes
     my $defc = $dw->cget('-nodeColor');
     foreach (values %{$dw->{tset}{node}})
       {
-        $dw->itemconfigure($_, outline => $defc) ; #unselect
+        $dw->itemconfigure($_, -outline => $defc) ; #unselect
       }
     delete $dw->{tset}{node} ;
   }
@@ -1300,8 +1307,9 @@ sub setNode
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $color = $args{color} ;
-    my $nodeId = $args{nodeId} || $dw->getCurrentNodeId ; # optional
+
+    my $color = $args{-color} || $args{color} ;
+    my $nodeId = $args{-nodeId} || $args{nodeId} || $dw->getCurrentNodeId ; # optional
 
     if (defined $dw->{xset}{node})
       {
@@ -1322,9 +1330,9 @@ sub nodeBind
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $color = $args{color} ;
-    my $button = $args{button} ;
-    my $callback = $args{command} ;
+    my $color = $args{-color} || $args{color} ;
+    my $button = $args{-button} || $args{button} ;
+    my $callback = $args{-command} || $args{command} ;
 
     $dw->bind
       (
@@ -1344,9 +1352,9 @@ sub command
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $on = $args{on};
-    my $label = $args{label} ;
-    my $sub = $args{command} ;
+    my $on = $args{-on} || $args{on};
+    my $label = $args{-label}  || $args{label} ;
+    my $sub = $args{-command}  || $args{command} ;
     
     $dw->{command}{$on}{$label} = $sub ;
   }
@@ -1355,7 +1363,7 @@ sub popupMenu
   {
     my $dw = shift ;
     my %args = @_ ;
-    my $on = delete $args{on} ;
+    my $on = delete $args{-on} || delete $args{on} ;
 
     my $menu = $dw-> Menu; 
     foreach (keys %{$dw->{command}{$on}})

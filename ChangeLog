@@ -1,3 +1,8 @@
+2003-12-11  Dominique Dumont  <domi@komarr.grenoble.hp.com>
+
+	* TreeGraph.pm: accept leading dash in method parameter
+	Works with Tk804
+
 2003-10-31  Dominique Dumont  <domi@komarr.grenoble.hp.com>
 
 	* TreeGraph.pm (addAllShortcuts): 

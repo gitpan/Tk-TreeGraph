@@ -1,3 +1,4 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
 use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -33,19 +34,19 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 
-$mw->Label(text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
-$mw->Label(text => 'click on button 1,2 and 3 on rectangles or embedded text')
+$mw->Label(-text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
+$mw->Label(-text => 'click on button 1,2 and 3 on rectangles or embedded text')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'Once you have selected several rectangles (button <1>),')
+$mw->Label(-text => 'Once you have selected several rectangles (button <1>),')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
+$mw->Label(-text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
 my $tg = $mw -> Scrolled(qw/TreeGraph -nodeColor red -nodeTextColor yellow
                          -nodeFill blue4/);
-$tg->pack(expand => 1, fill => 'both');
+$tg->pack(-expand => 1, -fill => 'both');
 
 $tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
   unless $trace ;
@@ -57,16 +58,16 @@ my $ref = [qw/some really_silly text/];
 
 $tg -> addNode 
   (
-   nodeId => '1.0', 
-   text => $ref
+   -nodeId => '1.0', 
+   -text => $ref
   ) ;
 
 print "ok ",$idx++,"\n";
 
 $tg -> addDirectArrow
   (
-   from => '1.0', 
-   to => '1.1'
+   -from => '1.0', 
+   -to => '1.1'
   ) ;
 
 print "ok ",$idx++,"\n";
@@ -196,9 +197,9 @@ print "ok ",$idx++,"\n";
 
 $tg->arrowBind
   (
-   button => '<1>',
-   color => 'yellow',
-   command =>  sub{my %h = @_;
+   -button => '<1>',
+   -color => 'yellow',
+   -command =>  sub{my %h = @_;
                    warn "clicked 1 arrow $h{from} -> $h{to}\n";}
   );
 
@@ -210,23 +211,23 @@ print "ok ",$idx++,"\n";
 
 $tg->nodeBind
   (
-   button => '<2>',
-   color => 'red',
-   command => sub {my %h = @_;
+   -button => '<2>',
+   -color => 'red',
+   -command => sub {my %h = @_;
                    warn "clicked 2 node $h{nodeId}\n";}
   );
 
-$tg->command( on => 'arrow', label => 'dummy 1', 
-                 command => sub{warn "arrow menu dummy1\n";});
-$tg->command( on => 'arrow', label => 'dummy 2', 
-                 command => sub{warn "arrow menu dummy2\n";});
+$tg->command( -on => 'arrow', -label => 'dummy 1', 
+                 -command => sub{warn "arrow menu dummy1\n";});
+$tg->command( -on => 'arrow', -label => 'dummy 2', 
+                 -command => sub{warn "arrow menu dummy2\n";});
 $tg->arrowBind(button => '<3>', color => 'green', 
               command => sub{$tg->popupMenu(@_);});
 
-$tg->command(on => 'node', label => 'dummy 1', 
-                 command => sub{warn "node menu dummy1\n";});
-$tg->command(on => 'node', label => 'dummy 2', 
-                 command => sub{warn "node menu dummy2\n";});
+$tg->command(-on => 'node', -label => 'dummy 1', 
+                 -command => sub{warn "node menu dummy1\n";});
+$tg->command(-on => 'node', -label => 'dummy 2', 
+                 -command => sub{warn "node menu dummy2\n";});
 $tg->nodeBind(button => '<3>', color => 'green', 
               command => sub{$tg->popupMenu(@_);});
 

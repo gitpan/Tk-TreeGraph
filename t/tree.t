@@ -1,3 +1,4 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
 use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -34,18 +35,18 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 
-$mw->Label(text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
-$mw->Label(text => 'click on button 1,2 and 3 on rectangles or embedded text')
+$mw->Label(-text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
+$mw->Label(-text => 'click on button 1,2 and 3 on rectangles or embedded text')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'Once you have selected several rectangles (button <1>),')
+$mw->Label(-text => 'Once you have selected several rectangles (button <1>),')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
+$mw->Label(-text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
 my $tg = $mw -> Scrolled('TreeGraph', -animation => 500 )
-  ->pack(expand => 1, -fill => 'both');
+  ->pack(-expand => 1, -fill => 'both');
 
 $tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
   unless $trace ;
@@ -58,10 +59,10 @@ my ($ox,$oy) = (100,100);
 
 $tg -> addNode 
   (
-   nodeId => '1.0', 
-   text => $ref, 
-   xref => \$ox, 
-   yref => \$oy
+   -nodeId => '1.0', 
+   -text => $ref, 
+   -xref => \$ox, 
+   -yref => \$oy
   ) ;
 
 print "ok ",$idx++,"\n";
@@ -70,52 +71,52 @@ my ($x,$y)= ($ox,$oy) ;
 
 $tg -> addDirectArrow
   (
-   from => '1.0', 
-   to => '1.1',
-   xref => \$x,
-   yref => \$y
+   -from => '1.0', 
+   -to => '1.1',
+   -xref => \$x,
+   -yref => \$y
   ) ;
 
 print "ok ",$idx++,"\n";
 
 $tg -> addNode 
   (
-   nodeId => '1.1',
-   text => $ref,
-   xref => \$x,
-   yref => \$y
+   -nodeId => '1.1',
+   -text => $ref,
+   -xref => \$x,
+   -yref => \$y
   ) ;
 
 $tg -> addDirectArrow
   (
-   from => '1.1',
-   to => '1.2',
-   xref => \$x,
-   yref => \$y
+   -from => '1.1',
+   -to => '1.2',
+   -xref => \$x,
+   -yref => \$y
   ) ;
 
 $tg -> addNode 
   (
-   nodeId => '1.2',
-   text => $ref,
-   xref => \$x,
-   yref => \$y
+   -nodeId => '1.2',
+   -text => $ref,
+   -xref => \$x,
+   -yref => \$y
   ) ;
 
 $tg -> addDirectArrow
   (
-   from => '1.2',
-   to => '1.3',
-   xref => \$x,
-   yref => \$y
+   -from => '1.2',
+   -to => '1.3',
+   -xref => \$x,
+   -yref => \$y
   ) ;
 
 $tg -> addNode 
   (
-   nodeId => '1.3',
-   text => $ref,
-   xref => \$x,
-   yref => \$y
+   -nodeId => '1.3',
+   -text => $ref,
+   -xref => \$x,
+   -yref => \$y
   ) ;
 
 print "ok ",$idx++,"\n";
@@ -124,84 +125,84 @@ my ($bx,$by)=($ox,$oy) ;
 my $dx ;
 
 $tg -> addSlantedArrow
-  (from => '1.0',
-   to => '1.0.1.1',
-   xref => \$bx,
-   yref => \$by,
-   deltaXref => \$dx
+  (-from => '1.0',
+   -to => '1.0.1.1',
+   -xref => \$bx,
+   -yref => \$by,
+   -deltaXref => \$dx
   ) ;
 
 print "ok ",$idx++,"\n";
 
 $tg -> addNode 
   (
-   nodeId => '1.0.1.1',
-   text => $ref,
-   xref => \$bx,
-   yref => \$by
+   -nodeId => '1.0.1.1',
+   -text => $ref,
+   -xref => \$bx,
+   -yref => \$by
   ) ;
 
 $tg -> addDirectArrow
   (
-   from => '1.0.1.1',
-   to => '1.0.1.2',
-   xref => \$bx,
-   yref => \$by
+   -from => '1.0.1.1',
+   -to => '1.0.1.2',
+   -xref => \$bx,
+   -yref => \$by
   ) ;
 
 $tg -> addNode 
   (
-   nodeId => '1.0.1.2',
-   text => $ref,
-   xref => \$bx,
-   yref => \$by
+   -nodeId => '1.0.1.2',
+   -text => $ref,
+   -xref => \$bx,
+   -yref => \$by
   ) ;
 
 my ($b2x,$b2y)=($ox,$oy) ;
 
 $tg -> addSlantedArrow
   (
-   from => '1.0',
-   to => '1.0.2.1',
-   xref => \$b2x,
-   yref => \$b2y,
-   deltaXref => \$dx
+   -from => '1.0',
+   -to => '1.0.2.1',
+   -xref => \$b2x,
+   -yref => \$b2y,
+   -deltaXref => \$dx
   ) ;
 
 $tg -> addNode 
   (
-   nodeId => '1.0.2.1',
-   text => $ref,
-   xref => \$b2x,
-   yref => \$b2y
+   -nodeId => '1.0.2.1',
+   -text => $ref,
+   -xref => \$b2x,
+   -yref => \$b2y
   ) ;
 
 $tg -> addDirectArrow
   (
-   from => '1.0.2.1',
-   to => '1.0.2.2',
-   xref => \$b2x,
-   yref => \$b2y
+   -from => '1.0.2.1',
+   -to => '1.0.2.2',
+   -xref => \$b2x,
+   -yref => \$b2y
   ) ;
 
 $tg -> addNode 
   (
-   nodeId => '1.0.2.2',
-   text => $ref,
-   xref => \$b2x,
-   yref => \$b2y
+   -nodeId => '1.0.2.2',
+   -text => $ref,
+   -xref => \$b2x,
+   -yref => \$b2y
   ) ;
 
 $tg->addShortcutInfo
   (
-   to => '1.2',
-   from => '1.0.2.1'
+   -to => '1.2',
+   -from => '1.0.2.1'
   ) ;
 
 $tg->addShortcutInfo
   (
-   to => '1.3',
-   from => '1.0.1.2'
+   -to => '1.3',
+   -from => '1.0.1.2'
   ) ;
 
 print "ok ",$idx++,"\n";
@@ -212,9 +213,9 @@ print "ok ",$idx++,"\n";
 
 $tg->arrowBind
   (
-   button => '<1>',
-   color => 'yellow',
-   command =>  sub{my %h = @_;
+   -button => '<1>',
+   -color => 'yellow',
+   -command =>  sub{my %h = @_;
                    warn "clicked 1 arrow $h{from} -> $h{to}\n";}
   );
 
@@ -228,17 +229,17 @@ $tg->nodeBind
                    warn "clicked 2 node $h{nodeId}\n";}
   );
 
-$tg->command( on => 'arrow', label => 'dummy 1', 
-                 command => sub{warn "arrow menu dummy1\n";});
-$tg->command( on => 'arrow', label => 'dummy 2', 
-                 command => sub{warn "arrow menu dummy2\n";});
+$tg->command( -on => 'arrow', -label => 'dummy 1', 
+                 -command => sub{warn "arrow menu dummy1\n";});
+$tg->command( -on => 'arrow', -label => 'dummy 2', 
+                 -command => sub{warn "arrow menu dummy2\n";});
 $tg->arrowBind(button => '<3>', color => 'green', 
               command => sub{$tg->popupMenu(@_);});
 
-$tg->command(on => 'node', label => 'dummy 1', 
-                 command => sub{warn "node menu dummy1\n";});
-$tg->command(on => 'node', label => 'dummy 2', 
-                 command => sub{warn "node menu dummy2\n";});
+$tg->command(-on => 'node', -label => 'dummy 1', 
+                 -command => sub{warn "node menu dummy1\n";});
+$tg->command(-on => 'node', -label => 'dummy 2', 
+                 -command => sub{warn "node menu dummy2\n";});
 $tg->nodeBind(button => '<3>', color => 'green', 
               command => sub{$tg->popupMenu(@_);});
 

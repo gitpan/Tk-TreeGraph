@@ -1,3 +1,4 @@
+# -*- cperl -*-
 # Before `make install' is performed this script should be runnable with
 use warnings FATAL => qw(all);
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -28,170 +29,170 @@ use strict ;
 sub draw 
   {
     my $pok = shift ;
-    $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');
+    $tg -> addLabel (-text => 'Looks like a VCS revision tree (hint hint)');
     print "ok ",$idx++,"\n" if $pok;
     
     my $ref = [qw/some really_silly text with no tag/];
     
     $tg -> addNode 
       (
-       nodeId => '1.0', 
-       text => $ref
+       -nodeId => '1.0', 
+       -text => $ref
       ) ;
     
     print "ok ",$idx++,"\n" if $pok;
     
     $tg -> addNode 
       (
-       after => '1.0', 
-       nodeId => '1.1',
-       text => $ref
+       -after => '1.0', 
+       -nodeId => '1.1',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.1', 
-       nodeId => '1.2',
-       text => $ref
+       -after => '1.1', 
+       -nodeId => '1.2',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.2', 
-       nodeId => '1.3',
-       text => $ref
+       -after => '1.2', 
+       -nodeId => '1.3',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.3', 
-       nodeId => '1.4',
-       text => $ref
+       -after => '1.3', 
+       -nodeId => '1.4',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.4', 
-       nodeId => '1.5',
-       text => $ref
-      ) ;
-    
-    print "ok ",$idx++,"\n" if $pok;
-    
-    
-    $tg -> addNode 
-      (
-       after => '1.4',
-       nodeId => '1.4.1.1',
-       text => $ref
-      ) ;
-    
-    $tg -> addNode 
-      (
-       after => '1.4',
-       nodeId => '1.4.2.1',
-       text => $ref
-      ) ;
-    
-    $tg -> addNode 
-      (
-       after => '1.4',
-       nodeId => '1.4.3.1',
-       text => $ref
-      ) ;
-    
-    $tg -> addNode 
-      (
-       after => '1.1',
-       nodeId => '1.1.1.1',
-       text => $ref
+       -after => '1.4', 
+       -nodeId => '1.5',
+       -text => $ref
       ) ;
     
     print "ok ",$idx++,"\n" if $pok;
     
+    
     $tg -> addNode 
       (
-       after => '1.1.1.1',
-       nodeId => '1.1.1.2',
-       text => $ref
+       -after => '1.4',
+       -nodeId => '1.4.1.1',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.0',
-       nodeId => '1.0.2.1',
-       text => $ref
+       -after => '1.4',
+       -nodeId => '1.4.2.1',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.0.2.1',
-       nodeId => '1.0.2.2',
-       text => $ref
+       -after => '1.4',
+       -nodeId => '1.4.3.1',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => '1.0.2.2',
-       nodeId => '1.0.2.3',
-       text => $ref
-      ) ;
-    
-    $tg -> addNode 
-      (
-       after => '1.0.2.1',
-       nodeId => '1.0.2.1.1.1',
-       text => $ref
-      ) ;
-    
-    $tg -> addNode 
-      (
-       after => [1000,100],
-       nodeId => 'martian node1', 
-       text => $ref
+       -after => '1.1',
+       -nodeId => '1.1.1.1',
+       -text => $ref
       ) ;
     
     print "ok ",$idx++,"\n" if $pok;
     
     $tg -> addNode 
       (
-       after => 'martian node1',
-       nodeId => 'martian node2', 
-       text => $ref
+       -after => '1.1.1.1',
+       -nodeId => '1.1.1.2',
+       -text => $ref
       ) ;
     
     $tg -> addNode 
       (
-       after => 'martian node1',
-       nodeId => 'martian node3', 
-       text => $ref
+       -after => '1.0',
+       -nodeId => '1.0.2.1',
+       -text => $ref
+      ) ;
+    
+    $tg -> addNode 
+      (
+       -after => '1.0.2.1',
+       -nodeId => '1.0.2.2',
+       -text => $ref
+      ) ;
+    
+    $tg -> addNode 
+      (
+       -after => '1.0.2.2',
+       -nodeId => '1.0.2.3',
+       -text => $ref
+      ) ;
+    
+    $tg -> addNode 
+      (
+       -after => '1.0.2.1',
+       -nodeId => '1.0.2.1.1.1',
+       -text => $ref
+      ) ;
+    
+    $tg -> addNode 
+      (
+       -after => [1000,100],
+       -nodeId => 'martian node1', 
+       -text => $ref
+      ) ;
+    
+    print "ok ",$idx++,"\n" if $pok;
+    
+    $tg -> addNode 
+      (
+       -after => 'martian node1',
+       -nodeId => 'martian node2', 
+       -text => $ref
+      ) ;
+    
+    $tg -> addNode 
+      (
+       -after => 'martian node1',
+       -nodeId => 'martian node3', 
+       -text => $ref
       ) ;
     
     $tg->addShortcutInfo
       (
-       to => '1.2',
-       from => '1.0.2.1'
+       -to => '1.2',
+       -from => '1.0.2.1'
       ) ;
     
     $tg->addShortcutInfo
       (
-       to => '1.3',
-       from => '1.1.1.2'
+       -to => '1.3',
+       -from => '1.1.1.2'
       ) ;
     
     $tg->addShortcutInfo
       (
-       to => '1.3',
-       from => 'martian node1'
+       -to => '1.3',
+       -from => 'martian node1'
       ) ;
     
     # test out-of sync drawings, alas it does not work 
     # to work, the drawing algorithm must be re-done ...
 #    $tg -> addNode 
 #      (
-#       after => '1.5',
-#       nodeId => '1.6',
-#       text => $ref
+#       -after => '1.5',
+#       -nodeId => '1.6',
+#       -text => $ref
 #      ) ;
     
     print "ok ",$idx++,"\n" if $pok;
@@ -202,9 +203,9 @@ sub draw
     
     $tg->arrowBind
       (
-       button => '<1>',
-       color => 'yellow',
-       command =>  sub{my %h = @_;
+       -button => '<1>',
+       -color => 'yellow',
+       -command =>  sub{my %h = @_;
                        warn "clicked 1 arrow $h{from} -> $h{to}\n";}
       );
     
@@ -218,17 +219,17 @@ sub draw
                        warn "clicked 2 node $h{nodeId}\n";}
       );
 
-    $tg->command( on => 'arrow', label => 'dummy 1', 
-                  command => sub{warn "arrow menu dummy1\n";});
-    $tg->command( on => 'arrow', label => 'dummy 2', 
-                  command => sub{warn "arrow menu dummy2\n";});
+    $tg->command( -on => 'arrow', -label => 'dummy 1', 
+                  -command => sub{warn "arrow menu dummy1\n";});
+    $tg->command( -on => 'arrow', -label => 'dummy 2', 
+                  -command => sub{warn "arrow menu dummy2\n";});
     $tg->arrowBind(button => '<3>', color => 'green', 
                    command => sub{$tg->popupMenu(@_);});
     
-    $tg->command(on => 'node', label => 'dummy 1', 
-                 command => sub{warn "node menu dummy1\n";});
-    $tg->command(on => 'node', label => 'dummy 2', 
-                 command => sub{warn "node menu dummy2\n";});
+    $tg->command(-on => 'node', -label => 'dummy 1', 
+                 -command => sub{warn "node menu dummy1\n";});
+    $tg->command(-on => 'node', -label => 'dummy 2', 
+                 -command => sub{warn "node menu dummy2\n";});
     $tg->nodeBind(button => '<3>', color => 'green', 
                   command => sub{$tg->popupMenu(@_);});
 
@@ -245,19 +246,19 @@ my $w_menu = $mw->Frame(-relief => 'raised', -borderwidth => 2);
 $w_menu->pack(-fill => 'x');
 
 my $f = $w_menu->Menubutton(-text => 'File', -underline => 0) 
-  -> pack(side => 'left' );
+  -> pack(-side => 'left' );
 
-$mw->Label(text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
-$mw->Label(text => 'click on button 1,2 and 3 on rectangles or embedded text')
+$mw->Label(-text => 'click on button 1 and 3 on arrows')->pack(-fill => 'x') ;
+$mw->Label(-text => 'click on button 1,2 and 3 on rectangles or embedded text')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'Once you have selected several rectangles (button <1>),')
+$mw->Label(-text => 'Once you have selected several rectangles (button <1>),')
   ->pack(-fill => 'x') ;
-$mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
+$mw->Label(-text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
 $tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/);
 
-$tg -> pack(expand => 1, fill => 'both');
+$tg -> pack(-expand => 1, -fill => 'both');
 $tg->configure(qw/-animation 800/, -scrollregion => [0, 0, 600 , 400 ])
   unless $trace ;
 
