@@ -1,4 +1,9 @@
-2001-04-02  Dominique Dumont  <domi@komarr.grenoble.hp.com>
+2003-10-31  Dominique Dumont  <domi@komarr.grenoble.hp.com>
+
+	* TreeGraph.pm (addAllShortcuts): 
+	- start and tip of shorcut arrows are now in the correct direction
+
+2001-04-02  Dominique Dumont  <domi@komarr.grenoble.hp.com> v1.024
 
 	* TreeGraph.pm :
  	- added viewNode method

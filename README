@@ -10,7 +10,7 @@ TreeGraph is able to draw the following items:
 - shortcuts arrow: an arrow to represent a shortcut between 2 nodes from
   different branches.
 
-TreeGraph is now in realeased status.
+TreeGraph is now in released status.
 
 Starting from version 1.007, all coordinates are handled by the
 object.  Hence drawing the tree is much simpler.
@@ -46,7 +46,7 @@ Thanks to Ralf Valerien for the bug fix and the spline shortcut arrow.
 
 Legal mumbo jumbo:
 
- Copyright (c) 1999-2001 Dominique Dumont. All rights reserved.
+ Copyright (c) 1999-2003 Dominique Dumont. All rights reserved.
  This program is free software; you can redistribute it and/or
  modify it under the same terms as Perl itself.
 

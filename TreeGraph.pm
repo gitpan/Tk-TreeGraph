@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -654,7 +654,7 @@ Will toggle the node rectangle between 'color' and default.
 
 Dominique Dumont, Dominique_Dumont@grenoble.hp.com
 
-Copyright (c) 1998-2001 Dominique Dumont. All rights reserved.
+Copyright (c) 1998-2003 Dominique Dumont. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
@@ -927,7 +927,7 @@ sub addAllShortcuts
     my $dx= $dw->cget('-branchSeparation')/2 - 10;
     my $branch_dx= $dw->cget('-branchSeparation');
     my $style = $dw->cget('-shortcutStyle') ;
-    
+
     foreach my $nodeId (keys %{$dw->{shortcutFrom}})
       {
         next unless defined $dw->{node}{rectangle}{$nodeId} ;
@@ -940,15 +940,15 @@ sub addAllShortcuts
             # end of arrow
             my ($ex, $ey) =($dw->coords($dw->{node}{rectangle}{$mNodeId}))[0,1] ;
             my @opt = ($bx + $dx, $by); # arrow start
-            
+
             # intermediate points for multi-segment line
             push @opt, ($bx+ $dx + $ex +$dx - $branch_dx)/2, ($by+$ey)/2 
               if $style eq 'spline' ;
-            
+
             push @opt , $ex + $dx, $ey ; # arrow end
-            
+
             push @opt ,qw/-smooth on/ if $style eq 'spline'; # spline mode 
- 
+
             my $itemId = $dw->create
               (
                'line', @opt ,
@@ -956,8 +956,8 @@ sub addAllShortcuts
                -tag => 'scutarrow',
                -fill=>$color
               );
-            $dw->{arrow}{start}{$itemId} = $mNodeId ;
-            $dw->{arrow}{tip}{$itemId} = $nodeId ;
+            $dw->{arrow}{start}{$itemId} = $nodeId;
+            $dw->{arrow}{tip}{$itemId} = $mNodeId ;
 	  }
       }
   }
