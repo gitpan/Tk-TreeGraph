@@ -1,0 +1,44 @@
+Tk::TreeGraph is a Canvas specialized to draw trees on a Canvas using
+arrows and nodes. A node is simply some text imbedded in a rectangular shape.
+
+TreeGraph is able to draw the following items:
+
+- node: some text in a rectangular shape.
+- direct arrow: an arrow to go from one node to the following one.
+- slanted arrow: an arrow to make a new branch 
+- shortcuts arrow: an arrow to represent a shortcut between 2 nodes from
+  different branches.
+
+Suggested DSLI line in the Ptk module list:
+
+Tk::TreeGraph bdpO  Widget to draw a tree in a Canvas    DDUMONT
+
+
+See the embedded documentation in the module for more details.
+
+Comments and suggestions are always welcome.
+
+Legal mumbo jumbo:
+
+ Copyright (c) 1999 Dominique Dumont. All rights reserved.
+ This program is free software; you can redistribute it and/or
+ modify it under the same terms as Perl itself.
+
+ - Dominique Dumont
+   dominique_dumont@grenoble.hp.com
+
+---------------------------------------------------------------------
+INSTALLATION
+
+   	 gunzip -c <dist_file>.tar.gz | tar xvf -
+   	 cd <dist_directory>
+   	 perl Makefile.PL
+   	 make test          
+   	 make install
+
+
+
+
+
+
+
