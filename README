@@ -19,6 +19,7 @@ node.
 
 Hence drawing the tree is even more simple.
 
+Starting from version 1.013, the drawing is more compact.
 
 
 Suggested DSLI line in the Ptk module list:

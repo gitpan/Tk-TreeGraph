@@ -12,7 +12,7 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
@@ -33,13 +33,16 @@ sub InitObject
        # use this to tune the shape of nodes and arrows
        -arrowDeltaY   => ['PASSIVE', undef, undef, 40 ],
        -branchSeparation => ['PASSIVE', undef, undef, 120 ],
-       -x_start       => ['PASSIVE', undef, undef, 100 ],
+       -x_start       => ['PASSIVE', undef, undef,  40 ],
        -y_start       => ['PASSIVE', undef, undef, 100 ]
       );
 
     # bind button <1> on nodes to select a version
     $dw->bind ('node', 
                '<1>' => sub {$dw->toggleNode(color => 'blue')});
+
+    $dw->{currentBranch} = 'b000';
+    $dw->{column}{$dw->{currentBranch}} = 0;
 
     $dw->SUPER::InitObject($args) ;
 
@@ -174,8 +177,7 @@ Methods to bind nodes and arrows on user's call-back.
 =head1 CAVEATS
 
 You might say that the tree is a weird tree since it is drawn downward
-and assymetric and adding branches leaves a lot of void between
-the them.
+and assymetric and adding branches leaves a some void between them.
 
 You'd be right. I'm not a specialist in tree drawing algorithms but
 the crude algorithm used here works quite fine with drawing id trees
@@ -553,8 +555,6 @@ perl(1), Tk(3), Tk::Canvas(3)
 # arrow -> tip   -> hash : key is arrow widget id, 
 #                          value is node Id where the arrow ends
 
-# node -> top       : [x,y] : coordinates of the top of the rectangle
-# node -> bottom    : [x,y] : coordinates of the bottom of the rectangle
 # node -> text      : text widget ref
 # node -> rectangle : rectangle widget ref
 
@@ -575,15 +575,18 @@ sub clear
   {
     my $dw = shift ;
     
-    foreach (qw/arrow node nodeId tset xset shortcutFrom x y slanted_x/)
+    foreach (qw/arrow node nodeId tset xset shortcutFrom x y/)
       {
         delete $dw->{$_};
       }
 
     $dw->delete('all');
 
-    $dw->configure(scrollregion => [0,0, 200 , 200 ])
+    $dw->configure(scrollregion => [0,0, 200 , 200 ]) ;
 
+    delete $dw->{limit};
+    $dw->{currentBranch} = 'b000';
+    $dw->{column}{$dw->{currentBranch}} = 0;
   }
 
 sub addLabel
@@ -595,6 +598,56 @@ sub addLabel
     my $defc = $dw->cget('-labelColor') ;
     $dw->create('text', '7c' , 5 , anchor => 'n' , fill => $defc,
                                text=> $text, justify => 'center') ;
+  }
+
+sub checkOverlay
+  {
+    my $dw = shift ;
+    my $y = shift ;
+
+    my $c= $dw->{column}{$dw->{currentBranch}};
+
+    #print "checking branch $dw->{currentBranch} col $c for y $y\n";
+
+    return 0 unless defined $dw->{limit}[$c];
+    #print "limit for col $c is $dw->{limit}[$c]\n";
+    return 0 unless $y > $dw->{limit}[$c]; 
+
+    my $old_c = $c ;
+    # must move the branch
+    while (defined $dw->{limit}[$c] and $y > $dw->{limit}[$c])
+      {
+        $c++ ;
+      }
+
+    #print "must move from column $old_c to $c)\n";
+
+    my $b=$dw->{currentBranch} ;
+    my $dx = $dw->cget('-branchSeparation')*($c-$old_c) ;
+
+    # shift the whole branch
+    $dw->move($dw->{currentBranch},$dx,0) ; 
+
+    # shift the tip of the arrow
+    my @coord = $dw->coords("arrow".$dw->{currentBranch}) ;
+    $coord[2]+= $dx ;
+    $dw->coords("arrow".$dw->{currentBranch}, @coord) ; 
+
+    # set the new limits to the bottom of the node from where the branch 
+    # starts
+    foreach my $idx ($old_c .. $c - 1)
+      {
+        #print "auto setting limit for col $idx at $coord[1]\n";
+        $dw->{limit}[$idx] = $coord[1] ;
+      }
+    
+    # update the cache the new column occupied by this branch 
+    $dw->{next_limit} = [ $c,  $coord[1] ];
+
+    # update current column
+    $dw->{column}{$dw->{currentBranch}} = $c;
+    
+    $dw->checkOverlay($y) ;
   }
 
 ## Arrow functions
@@ -609,27 +662,26 @@ sub addDirectArrow
     my $lowerNodeId =  $args{to} ;
 
     $dw->{after}{$nodeId}=1;
-    my $x = $dw->{x} ;
-    my $y = $dw->{y};
+    my $branch_dx= $dw->cget('-branchSeparation');
+    my $c = $dw->{column}{$dw->{currentBranch}} ;
+    my $x = $branch_dx * $c + $dw->{tree_start} + $branch_dx/2 - 10 ;
+    my $old_y = $dw->{y};
 
-    $dw->BackTrace("AddSlantedArrow: unknown 'from' nodeId: $nodeId\n")
-      unless defined $dw->{node}{bottom}{$nodeId};
-
-    my $old_x = $x = $dw->{node}{bottom}{$nodeId}[0];
-    my $old_y = $y = $dw->{node}{bottom}{$nodeId}[1];
-
-    my $arrow_dy = $dw->cget('-arrowDeltaY');
-    $y = $old_y + $arrow_dy ; # give length of arrow
+    $dw->BackTrace("addDirectArrow: unknown 'from' nodeId: $nodeId\n")
+      unless defined $dw->{node}{rectangle}{$nodeId};
+    
+    my $y = $old_y + $dw->cget('-arrowDeltaY') ; # give length of arrow
 
     my $defc = $dw->cget('-arrowColor'); 
-    my $itemId = $dw->create('line', $x, $old_y, $x, $y , 
-                             fill => $defc,
-                             qw(-arrow last -tags arrow)); 
+    my $itemId = $dw->create
+      ('line', $x, $old_y, $x, $y , 
+       -fill => $defc, 
+       -tags => ["arrow",$dw->{currentBranch}],
+       -arrow =>'last'); 
 
     $dw->{arrow}{start}{$itemId} = $nodeId ; 
     $dw->{arrow}{tip}{$itemId} = $lowerNodeId ; 
 
-    $dw->{x} = $x;
     $dw->{y} = $y ;
   }
 
@@ -697,36 +749,47 @@ sub addSlantedArrow
     my %args = @_ ;
     my $nodeId = $args{from} ;
     my $branch =  $args{to} ;
-    my $x = $dw->{x};
     my $y = $dw->{y} ;
 
-    my $sx = $dw->{slanted_x} || $dw->cget('-x_start');
+    $dw->BackTrace("AddSlantedArrow: unknown 'from' nodeId: $nodeId\n")
+      unless defined $dw->{node}{rectangle}{$nodeId};
+
+    my $nodeBranch = $dw -> {node}{branch}{$nodeId};
+    my $old_c = $dw->{column}{$nodeBranch} ;
+    my ($old_x, $old_y) = ($dw->coords($dw->{node}{rectangle}{$nodeId}))[0,3];
+
+    $y = $old_y + $dw->cget('-arrowDeltaY') ; # give length of arrow
+
+    # create the new branch on the next column
+    $dw->{currentBranch}++;
+    $dw->{column}{$dw->{currentBranch}} = $old_c + 1 ;
 
     my $branch_dx= $dw->cget('-branchSeparation');
-
-    $sx += $branch_dx  ;
-
-    $dw->BackTrace("AddSlantedArrow: unknown 'from' nodeId: $nodeId\n")
-      unless defined $dw->{node}{bottom}{$nodeId};
-
-    my $old_x = $x = $dw->{node}{bottom}{$nodeId}[0];
-    my $old_y = $y = $dw->{node}{bottom}{$nodeId}[1];
-
-    my $arrow_dy = $dw->cget('-arrowDeltaY');
-    $y += $arrow_dy ; # give length of arrow
-    $x = $sx ;
+    my $x = $branch_dx * ($old_c+1) + $dw->{tree_start}  ;
 
     my $defc = $dw->cget('-arrowColor');
-    my $itemId = $dw->create('line', $old_x, $old_y, 
-                             $x, $y,   fill => $defc,
-                             qw(arrow last tags arrow));
+    my $itemId = $dw->create('line', 
+                             $old_x + $branch_dx/2 - 10, $old_y, 
+                             $x + $branch_dx/2 - 10, $y,
+                             fill => $defc,
+                             -tags => ["arrow","arrow".$dw->{currentBranch}],
+                             -arrow =>'last'); 
 
     $dw->{arrow}{start}{$itemId} = $nodeId ;
     $dw->{arrow}{tip}{$itemId} = $branch ;
 
-    $dw->{x} = $x;
+    if (defined $dw->{next_limit})
+      {
+        my ($c,$l) = @{$dw->{next_limit}};
+        #print "setting limit for col $c at $l\n";
+        $dw->{limit}[$c] =  $l ;
+      }
+    
+    # cache the limit for that we don't limit the drawing of this branch
+    #print "setting next limit for col ",$old_c+1, " at $old_y\n";
+    $dw->{next_limit} = [ $old_c + 1,  $old_y ];
+
     $dw->{y} = $y ;
-    $dw->{slanted_x} = $sx;
   }
 
 ## Short Cut Arrows 
@@ -747,15 +810,26 @@ sub addAllShortcuts
 
     my $color = $dw->cget('-shortcutColor') || $dw->cget('-foreground');
 
+    my $dx= $dw->cget('-branchSeparation')/2 - 10;
+
     foreach my $nodeId (keys %{$dw->{shortcutFrom}})
       {
         my $mNodeId = $dw->{shortcutFrom}{$nodeId} ;
-        next unless defined $dw->{node}{bottom}{$mNodeId} ;
-        next unless defined $dw->{node}{bottom}{$nodeId} ;
-        my ($bx, $by) = @{$dw->{node}{bottom}{$nodeId}} ; # beginning of arrow
-        my ($ex, $ey) = @{$dw->{node}{top}{$mNodeId}} ; # end of arrow
-        my $itemId = $dw->create('line', $bx, $by, $ex, $ey,  
-               'arrow' => 'last', 'tag' => 'scutarrow','fill'=>$color);
+
+        next unless defined $dw->{node}{rectangle}{$mNodeId} ;
+        next unless defined $dw->{node}{rectangle}{$nodeId} ;
+        # beginning of arrow
+        my ($bx, $by) = ($dw->coords($dw->{node}{rectangle}{$nodeId}))[0,3] ;
+        # end of arrow
+        my ($ex, $ey) =($dw->coords($dw->{node}{rectangle}{$mNodeId}))[0,1] ;
+        my $itemId = $dw->create
+          (
+           'line', 
+           $bx + $dx, $by, 
+           $ex + $dx, $ey,  
+           'arrow' => 'last', 'tag' => 'scutarrow','fill'=>$color
+          );
+
         $dw->{arrow}{start}{$itemId} = $mNodeId ;
         $dw->{arrow}{tip}{$itemId} = $nodeId ;
       }
@@ -772,14 +846,14 @@ sub addNode
     my $nodeId = $args{nodeId} ;
     my $textArrayRef = $args{text} ;
 
+    #print "Drawing node $nodeId\n";
     my $after = $args{after};
     if (defined $after)
       {
         if (ref($after) eq 'ARRAY')
           {
             # re-start another tree
-            ($dw->{x},$dw->{y}) = @$after;
-            $dw->{slanted_x} = $dw->{x};
+            ($dw->{tree_start},$dw->{y}) = @$after;
           }
         elsif (defined $dw->{after}{$after})
           {
@@ -790,47 +864,54 @@ sub addNode
             $dw->addDirectArrow('from' => $after, to => $nodeId);
           }
       }
-
-    my $x = $dw->{x} || $dw->cget('-x_start');
-    my $y = $dw->{y} || $dw->cget('-y_start');
-
-    # compute x coord 
-    # find lower node and call addNode
-
-    $dw->{node}{top}{$nodeId} = [ $x, $y] ; # top of node text
-
-    my $oldy = $y ;
-    $y += 5 ; # give some breathing space 
-
+    
+    # initialiaztion
+    $dw->{tree_start}=$dw->cget('-x_start') unless defined $dw->{tree_start};
+    
+    # compute text to draw
     my $text = $dw->cget('-nodeTag') ? 
       join ("\n", $nodeId, @$textArrayRef)."\n" :
         join ("\n", @$textArrayRef)."\n"  ;
 
-    # compute y coord
-    # draw node
-    my $defc = $dw->cget('-nodeTextColor');
+    # first compute y coord 
+    my $oldy = $dw->{y} || $dw->cget('-y_start');
+    my $y = $oldy + 5 ; # give some breathing space 
 
-    my $tid = $dw->create('text', $x, $y, text=>$text,  fill => $defc,
-                          qw/justify center anchor n width 12c tags node/) ;
-
+    # compute y according to the text drawn
     $y += 14 if $dw->cget('-nodeTag') ; # add room for the node tag
     $y += 14 * scalar(@$textArrayRef) + 10 ;
 
-    my $branch_dx= $dw->cget('-branchSeparation');
+    # check if we're not drawing over something
+    $dw->checkOverlay($y);
 
+    # then I can compute the x coordinate
+    my $branch_dx= $dw->cget('-branchSeparation');
+    my $c = $dw->{column}{$dw->{currentBranch}} ;
+    my $x = $branch_dx * $c + $dw->{tree_start}  ;
+
+    # compute y coord
+    # draw node text
+    my $defc = $dw->cget('-nodeTextColor');
+
+    my $tid = $dw->create('text', $x + $branch_dx/2 - 10, $oldy + 5, 
+                          -text=>$text,  -fill => $defc,
+                          qw/-justify center -anchor n -width 12c/,
+                          -tags => ['node', $dw->{currentBranch}]) ;
+
+    # draw node rectangle
     $defc = $dw->cget('-nodeColor');
     my $rid = $dw->create('rectangle',
-                          $x - $branch_dx/2 + 10 , $oldy,
-                          $x + $branch_dx/2 - 10 , $y,
-                          -outline => $defc, width => 2 , tags => 'node'
+                          $x , $oldy,
+                          $x + $branch_dx   - 20 , $y,
+                          -outline => $defc, -width => 2 , 
+                          -tags => ['node', $dw->{currentBranch}]
                         ) ;
 
     $dw -> {nodeId}{$tid}=$nodeId ; 
     $dw -> {nodeId}{$rid}=$nodeId ; # also stored
     $dw -> {node}{text}{$nodeId}=$tid ;
     $dw -> {node}{rectangle}{$nodeId}=$rid ;
-
-    $dw->{node}{bottom}{$nodeId} = [ $x, $y] ; # bottom of node text
+    $dw -> {node}{branch}{$nodeId}= $dw->{currentBranch} ;
 
     # must initialize myself the scrollregion for the first time
     my $array = $dw->cget('scrollregion') || [0,0, 200, 200];

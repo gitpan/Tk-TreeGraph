@@ -1,3 +1,8 @@
+1999-07-23  Dominique Dumont  <domi@barrayar.grenoble.hp.com>
+
+	* TreeGraph.pm :
+	- can draw more compact trees (big changes in the code)
+
 1999-04-21  Dominique Dumont  <domi@barrayar.grenoble.hp.com> v1.011
 
 	* TreeGraph.pm : 

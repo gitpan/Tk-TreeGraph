@@ -41,7 +41,7 @@ $mw->Label(text => 'Once you have selected several rectangles (button <1>),')
 $mw->Label(text => 'You can unselect them all with menu File->unselect nodes')
   ->pack(-fill => 'x') ;
 
-my $tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 0/)
+my $tg = $mw -> Scrolled(qw/TreeGraph -nodeTag 1/)
   ->pack(expand => 1, fill => 'both');
 
 $tg -> addLabel (text => 'Looks like a VCS revision tree (hint hint)');
@@ -78,8 +78,43 @@ $tg -> addNode
    text => $ref
   ) ;
 
+$tg -> addNode 
+  (
+   after => '1.3', 
+   nodeId => '1.4',
+   text => $ref
+  ) ;
+
+$tg -> addNode 
+  (
+   after => '1.4', 
+   nodeId => '1.5',
+   text => $ref
+  ) ;
+
 print "ok ",$idx++,"\n";
 
+
+$tg -> addNode 
+  (
+   after => '1.4',
+   nodeId => '1.4.1.1',
+   text => $ref
+  ) ;
+
+$tg -> addNode 
+  (
+   after => '1.4',
+   nodeId => '1.4.2.1',
+   text => $ref
+  ) ;
+
+$tg -> addNode 
+  (
+   after => '1.4',
+   nodeId => '1.4.3.1',
+   text => $ref
+  ) ;
 
 $tg -> addNode 
   (
