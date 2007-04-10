@@ -12,32 +12,32 @@ use AutoLoader qw/AUTOLOAD/ ;
 
 @ISA = qw(Tk::Derived Tk::Canvas);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%03d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 
 Tk::Widget->Construct('TreeGraph');
 
-sub InitObject
-  {
+sub InitObject {
     my ($dw,$args) = @_ ;
 
     # this should get a reasonable default ...
     my $defc = $dw->parent->cget('-foreground');
-    $dw->ConfigSpecs
-      (
-       -shortcutColor  => ['PASSIVE', undef, undef, 'orange'],
-       -shortcutStyle  => ['PASSIVE', undef, undef, 'straight'],
-       -animation      => ['PASSIVE', undef, undef, 0 ],
-       -nodeColor      => ['PASSIVE', undef, undef, $defc],
-       -nodeFill => ['PASSIVE', undef, undef, undef ],
-       -arrowColor     => ['PASSIVE', undef, undef, $defc],
-       -nodeTextColor  => ['PASSIVE', undef, undef, $defc],
-       -labelColor     => ['PASSIVE', undef, undef, $defc],
-       -nodeTag        => ['PASSIVE', undef, undef, 1 ], # add node Id to text
+    $dw->ConfigSpecs (
+       '-shortcutColor'    => ['PASSIVE', undef, undef, 'orange'   ],
+       '-shortcutStyle'    => ['PASSIVE', undef, undef, 'straight' ],
+       '-animation'        => ['PASSIVE', undef, undef, 0          ],
+       '-nodeColor'        => ['PASSIVE', undef, undef, $defc      ],
+       '-nodeFill'         => ['PASSIVE', undef, undef, undef      ],
+       '-arrowColor'       => ['PASSIVE', undef, undef, $defc      ],
+       '-nodeTextColor'    => ['PASSIVE', undef, undef, $defc      ],
+       '-labelColor'       => ['PASSIVE', undef, undef, $defc      ],
+
+       # add node Id to text
+       '-nodeTag'          => ['PASSIVE', undef, undef, 1          ],
        # use this to tune the shape of nodes and arrows
-       -arrowDeltaY    => ['PASSIVE', undef, undef, 40 ],
-       -branchSeparation => ['PASSIVE', undef, undef, 120 ],
-       -x_start        => ['PASSIVE', undef, undef,  40 ],
-       -y_start        => ['PASSIVE', undef, undef, 100 ]
+       '-arrowDeltaY'      => ['PASSIVE', undef, undef,  40        ],
+       '-branchSeparation' => ['PASSIVE', undef, undef, 120        ],
+       '-x_start'          => ['PASSIVE', undef, undef,  40        ],
+       '-y_start'          => ['PASSIVE', undef, undef, 100        ],
       );
 
     # bind button <1> on nodes to select a version
@@ -48,7 +48,7 @@ sub InitObject
     $dw->{column}{$dw->{currentBranch}} = 0;
 
     $dw->SUPER::InitObject($args) ;
-  }
+}
 
 
 1;
@@ -650,17 +650,6 @@ pointer)
 
 Will toggle the node rectangle between 'color' and default.
 
-=head1 AUTHOR
-
-Dominique Dumont, Dominique_Dumont@grenoble.hp.com
-
-Copyright (c) 1998-2004 Dominique Dumont. All rights reserved.
-This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
-
-=head1 SEE ALSO
-
-L<Tk>, L<Tk::Canvas>
 
 =cut
 
@@ -1369,8 +1358,143 @@ sub popupMenu
            '-label' => $_, 
            '-command' => sub {&$s(%args) ;}
           );
-      }
+    }
 
     $menu->Popup(-popover => 'cursor', -popanchor => 'nw');
   }
 
+
+=head3 draw_tree_from_ref( $tree_aref )
+
+Draws a tree from a structure like this:
+my $tree_aref = [['Root', ['Terminal', ['Nonterminal', ['Terminal']]]]];
+
+=cut
+
+sub draw_tree_from_ref {
+    my $self            = shift;
+    my $tree_aref       = shift;
+
+    my $root_node_id    = '1.0';
+
+    $self->clear() ;
+
+    # Debug:
+    #print Dumper $root_node_id;
+    #print Dumper $tree_aref;
+
+    # -- ckeck input
+    if( ref $tree_aref ne 'ARRAY' ){
+	croak("draw_tree_from_ref: the tree must be an array ref");
+    }
+    else {
+	# -- draw root-node and recurse with rest
+	$self->addNode(
+		       nodeId  => $root_node_id,
+		       text    => $tree_aref->[0]->[0],
+		      );
+
+	$self->_draw_tree_from_ref_recursive($tree_aref->[0]->[1],
+					     $root_node_id);
+    }
+
+} # /draw_tree_from_ref
+
+=head3 _draw_tree_from_ref_recursive( $tree_aref, $root_node_id )
+
+This is the private method we use to draw the tree recursively. It is called
+by draw_tree_from_ref($tree_aref). As this method is private, it is not
+indended to be called directly.
+
+$tree_aref has to be a tree-structure as the following expamle:
+
+ my $tree_aref = [['Root', ['Terminal', ['Nonterminal', ['Terminal']]]]] ;
+
+=cut
+
+sub _draw_tree_from_ref_recursive {
+    my $self            = shift;
+    my $tree_aref       = shift;
+    my $root_node_id    = shift;
+
+    ## Debug:
+    #print Dumper $root_node_id;
+    #print Dumper $tree_aref;
+
+    # -- iterate throuh the children of the actual root-node
+    foreach my $pos ( 0 ..  (@$tree_aref-1) ) {
+	my $e = $tree_aref->[$pos];
+
+	if( ref $e eq 'ARRAY' ) {
+
+	    # -- calculate new id
+	    my $new_id = $self->_calcNewTreeId($root_node_id, $pos);
+
+	    # -- draw node containing nonterminal
+	    $self->addNode(
+			   after   => $root_node_id,
+			   nodeId  => $new_id,
+			   text    => $e->[0],
+			  );
+
+	    # -- recurse with rest
+	    $self->_draw_tree_from_ref_recursive($e->[1], $new_id);
+
+	}
+	else {
+
+	    # -- build new id
+	    my $new_id = $self->_calcNewTreeId($root_node_id, $pos);
+
+	    # -- draw node containing terminal
+	    $self->addNode(
+			   after   => $root_node_id,
+			   nodeId  => $new_id,
+			   text    => $e,
+			  );
+
+	}
+    }
+
+} # /_draw_tree_from_ref_recursive
+
+=head3 _calcNewTreeId( $motherId, $pos_in_tree_level )
+
+Method used in draw_tree_from_ref. Calculates the id of a child in a
+subtree-level and returns it. Needs the id of the root-node of the
+sub-tree and the position of the element.
+
+=cut
+
+sub _calcNewTreeId {
+    my $self                = shift;
+    my $mother_id           = shift;
+    my $pos_in_tree_level   = shift; # tree-item-count starts at 0.
+    my $new_id              = undef;
+
+    if( $mother_id =~ m/(.+)\.0$/ ) {
+	$new_id = $1 . '.' . ($pos_in_tree_level+1);
+    }
+    else {
+	$new_id = $mother_id . '.' . ($pos_in_tree_level+1);
+    }
+
+    return $new_id;
+} # /
+
+=head1 AUTHOR
+
+Dominique Dumont, ddumont at cpan dot org.
+
+Copyright (c) 1998-2004,2007 Dominique Dumont. All rights reserved.
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+Thanks to Alexander Becker for the method to draw a tree from an array
+ref.
+
+=head1 SEE ALSO
+
+L<Tk>, L<Tk::Canvas>
+
+=cut
